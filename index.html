@@ -20,8 +20,16 @@
   .header h1 { font-size:clamp(20px,5vw,40px); color:var(--g2); text-shadow:4px 4px 0 #061209,-2px -2px 0 var(--g1),2px 0 0 var(--red),-2px 0 0 var(--g3); letter-spacing:4px; line-height:1.3; margin-bottom:10px; }
   .header .tagline { font-size:8px; letter-spacing:3px; color:var(--dim); margin-top:8px; }
   @keyframes blink { 50%{opacity:0} }
-  .score-bar { display:flex; justify-content:space-between; font-size:8px; border:2px solid var(--panel); background:var(--bg2); padding:8px 14px; margin-bottom:1.2rem; letter-spacing:1px; }
+  .score-bar { display:flex; justify-content:space-between; align-items:center; font-size:8px; border:2px solid var(--panel); background:var(--bg2); padding:8px 14px; margin-bottom:1.2rem; letter-spacing:1px; position:relative; }
   .score-bar span { color:var(--yel); }
+  #audio-panel { display:none; position:absolute; right:0; top:calc(100% + 6px); z-index:999; background:var(--bg2); border:2px solid var(--g1); outline:1px solid var(--dim); outline-offset:-3px; padding:12px 14px; min-width:250px; }
+  .ap-row { display:flex; align-items:center; gap:10px; }
+  .ap-row:first-child { padding-bottom:10px; border-bottom:1px solid var(--panel); margin-bottom:10px; }
+  .ap-lbl { font-size:7px; letter-spacing:2px; color:var(--dim); width:28px; }
+  .ap-mute { background:none; border:none; cursor:pointer; font-size:11px; padding:0; color:var(--yel); font-family:var(--px); }
+  .ap-val { font-size:7px; color:var(--yel); letter-spacing:1px; width:28px; text-align:right; }
+  #audio-panel input[type=range] { accent-color:var(--g2); cursor:pointer; flex:1; }
+  #audio-panel input[type=range]:disabled { opacity:0.3; cursor:default; }
   .panel { background:var(--bg2); border:3px solid var(--panel); outline:2px solid var(--g1); outline-offset:-5px; padding:1.4rem; margin-bottom:1.2rem; }
   .panel-title { font-size:9px; letter-spacing:2px; color:var(--g2); margin-bottom:14px; }
   .btn { padding:10px 18px; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; border:0; outline:none; background:var(--panel); color:var(--white); cursor:pointer; font-family:var(--px); box-shadow:0 4px 0 #071a10,4px 0 0 #0a2a14; transition:all 0.08s; }
@@ -111,6 +119,21 @@
     <div>1UP &nbsp;<span id="round-count">00</span></div>
     <div>PLAYERS &nbsp;<span id="player-count">00</span></div>
     <div>CREDIT &nbsp;<span>01</span></div>
+    <button id="mute-btn" onclick="toggleAudioPanel(event)" style="background:none;border:none;cursor:pointer;font-size:12px;padding:0;color:var(--yel);font-family:var(--px);">🔊</button>
+    <div id="audio-panel" onclick="event.stopPropagation()">
+      <div class="ap-row">
+        <span class="ap-lbl">BGM</span>
+        <button class="ap-mute" id="bgm-mute" onclick="toggleBGMute()">🔊</button>
+        <input type="range" id="bgm-vol" min="0" max="100" value="100" oninput="setBGVol(this.value)">
+        <span class="ap-val" id="bgm-vol-label">100</span>
+      </div>
+      <div class="ap-row">
+        <span class="ap-lbl">SFX</span>
+        <button class="ap-mute" id="sfx-mute" onclick="toggleSFXMute()">🔊</button>
+        <input type="range" id="sfx-vol" min="0" max="100" value="100" oninput="setSFXVol(this.value)">
+        <span class="ap-val" id="sfx-vol-label">100</span>
+      </div>
+    </div>
   </div>
 
   <!-- SCREEN 1: Setup -->
@@ -219,7 +242,7 @@ function togglePicker(btn, e) {
     sp.style.cssText = 'font-size:22px;cursor:pointer;padding:3px;';
     sp.onmouseover = () => sp.style.background = 'var(--panel)';
     sp.onmouseout  = () => sp.style.background = '';
-    sp.onclick = ev => { ev.stopPropagation(); btn.textContent = em; closePicker(); };
+    sp.onclick = ev => { ev.stopPropagation(); SFX.click(); btn.textContent = em; closePicker(); };
     grid.appendChild(sp);
   });
   pickerTd.appendChild(grid);
@@ -372,6 +395,7 @@ function startRace() {
 
   // Init suspense state
   cleanupRaceEffects();
+  SFX.gunshot();
 
   let done=false;
 
@@ -428,6 +452,7 @@ function declareWinner(winnerName) {
   remainingPlayers=remainingPlayers.filter(p=>p.name!==winnerName);
   document.getElementById('winner-name').textContent=winnerName;
   document.getElementById('next-btn').style.display=remainingPlayers.length>=2?'inline-block':'none';
+  SFX.winJingle();
   showScreen('winner');
   spawnConfetti(winnerEmoji);
 }
@@ -466,6 +491,182 @@ function spawnConfetti(winnerEmoji='🏆') {
   }
 }
 addPlayerRow(); addPlayerRow(); addPlayerRow();
+
+// ── Audio Engine (Web Audio API — no external files) ──────────────────────
+const SFX = (() => {
+  let ctx=null, master=null, bgBus=null, sfxBus=null;
+  let bgPlaying=false, bgTimer=null;
+  let _bgVol=1, _sfxVol=1, _bgMuted=false, _sfxMuted=false;
+  const BPM=172, B=60/BPM;
+
+  // 16-beat chiptune loop in C major pentatonic
+  const MELODY=[
+    [784,.5],[659,.5],[523,.5],[659,.5],
+    [784,.5],[880,.5],[784,.5],[659,.5],
+    [659,.5],[784,.5],[523,.5],[659,.5],
+    [523,.5],[392,.5],[523,1.0],
+    [880,.5],[784,.5],[659,.5],[784,.5],
+    [880,.5],[1047,.5],[880,.5],[784,.5],
+    [784,.5],[659,.5],[523,.5],[392,.5],
+    [523,.5],[392,.5],[523,1.0],
+  ];
+  const BASS=[[131,4],[98,4],[131,4],[98,2],[131,2]]; // C3 G2 C3 G2 C3
+
+  function _init(){
+    if(ctx){if(ctx.state==='suspended')ctx.resume();return true;}
+    try{
+      ctx=new(window.AudioContext||window.webkitAudioContext)();
+      master=ctx.createGain();master.gain.value=1;master.connect(ctx.destination);
+      bgBus=ctx.createGain();bgBus.gain.value=0.12;bgBus.connect(master);
+      sfxBus=ctx.createGain();sfxBus.gain.value=1;sfxBus.connect(master);
+      return true;
+    }catch(e){return false;}
+  }
+
+  function _n(freq,type,vol,when,dur,bus){
+    if(!ctx)return;
+    const o=ctx.createOscillator(),g=ctx.createGain();
+    o.connect(g);g.connect(bus||sfxBus);
+    o.type=type;o.frequency.value=freq;
+    g.gain.setValueAtTime(0,when);
+    g.gain.linearRampToValueAtTime(vol,when+.01);
+    g.gain.setValueAtTime(vol,when+Math.max(.01,dur-.03));
+    g.gain.linearRampToValueAtTime(0,when+dur);
+    o.start(when);o.stop(when+dur+.02);
+  }
+
+  function _kick(when){
+    if(!ctx)return;
+    const o=ctx.createOscillator(),g=ctx.createGain();
+    o.connect(g);g.connect(bgBus);o.type='sine';
+    o.frequency.setValueAtTime(110,when);o.frequency.exponentialRampToValueAtTime(28,when+.18);
+    g.gain.setValueAtTime(.45,when);g.gain.exponentialRampToValueAtTime(.001,when+.22);
+    o.start(when);o.stop(when+.25);
+  }
+
+  function _loop(){
+    if(!bgPlaying||!ctx)return;
+    const now=ctx.currentTime;
+    let t=now;
+    MELODY.forEach(([f,b])=>{_n(f,'square',.6,t,b*B*.85,bgBus);t+=b*B;});
+    let t2=now;
+    BASS.forEach(([f,b])=>{_n(f,'triangle',.7,t2,b*B*.8,bgBus);t2+=b*B;});
+    const total=MELODY.reduce((s,[,b])=>s+b,0);
+    for(let beat=0;beat<total;beat+=2)_kick(now+beat*B);
+    bgTimer=setTimeout(_loop,(total*B-.05)*1000);
+  }
+
+  function _startBG(){if(bgPlaying||!ctx||_bgMuted)return;bgPlaying=true;_loop();}
+  function _stopBG(){bgPlaying=false;if(bgTimer){clearTimeout(bgTimer);bgTimer=null;}}
+
+  function click(){
+    if(!ctx)return;
+    const now=ctx.currentTime,o=ctx.createOscillator(),g=ctx.createGain();
+    o.connect(g);g.connect(sfxBus);o.type='square';
+    o.frequency.setValueAtTime(880,now);o.frequency.exponentialRampToValueAtTime(440,now+.07);
+    g.gain.setValueAtTime(.2,now);g.gain.exponentialRampToValueAtTime(.001,now+.09);
+    o.start(now);o.stop(now+.1);
+  }
+
+  function gunshot(){
+    if(!ctx)return;
+    const now=ctx.currentTime,sr=ctx.sampleRate;
+    const buf=ctx.createBuffer(1,Math.floor(sr*.4),sr);
+    const d=buf.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+    const noise=ctx.createBufferSource();noise.buffer=buf;
+    const ng=ctx.createGain();noise.connect(ng);ng.connect(sfxBus);
+    ng.gain.setValueAtTime(.8,now);ng.gain.exponentialRampToValueAtTime(.001,now+.4);
+    noise.start(now);
+    const o=ctx.createOscillator(),og=ctx.createGain();
+    o.connect(og);og.connect(sfxBus);o.type='sawtooth';
+    o.frequency.setValueAtTime(180,now);o.frequency.exponentialRampToValueAtTime(20,now+.55);
+    og.gain.setValueAtTime(.6,now);og.gain.exponentialRampToValueAtTime(.001,now+.55);
+    o.start(now);o.stop(now+.6);
+  }
+
+  function winJingle(){
+    if(!ctx)return;
+    const now=ctx.currentTime;
+    [[523,0],[659,.13],[784,.26],[1047,.39],[1047,.56],[1047,.67],[1047,.8]].forEach(([f,s],i,a)=>{
+      _n(f,'square',.28,now+s,i<a.length-1?.11:.55);
+    });
+    _n(659,'square',.12,now+.39,.6); // harmony
+    _n(784,'square',.08,now+.39,.6);
+  }
+
+  function setBGVol(v){
+    _bgVol=v;
+    if(bgBus)bgBus.gain.value=_bgMuted?0:v*0.12;
+  }
+  function setSFXVol(v){
+    _sfxVol=v;
+    if(sfxBus)sfxBus.gain.value=_sfxMuted?0:v;
+  }
+  function toggleBGMute(){
+    _bgMuted=!_bgMuted;
+    if(bgBus)bgBus.gain.value=_bgMuted?0:_bgVol*0.12;
+    if(_bgMuted)_stopBG(); else if(!bgPlaying&&ctx)_startBG();
+    return _bgMuted;
+  }
+  function toggleSFXMute(){
+    _sfxMuted=!_sfxMuted;
+    if(sfxBus)sfxBus.gain.value=_sfxMuted?0:_sfxVol;
+    return _sfxMuted;
+  }
+
+  // Init AudioContext on first user gesture (browser autoplay policy)
+  let _ready=false;
+  function _boot(){
+    if(_ready)return;_ready=true;
+    if(_init())_startBG();
+    document.removeEventListener('click',_boot,true);
+    document.removeEventListener('touchstart',_boot,true);
+  }
+  document.addEventListener('click',_boot,true);
+  document.addEventListener('touchstart',_boot,true);
+
+  return{click,gunshot,winJingle,setBGVol,setSFXVol,toggleBGMute,toggleSFXMute};
+})();
+
+function toggleAudioPanel(e) {
+  e.stopPropagation();
+  closePicker();
+  const p = document.getElementById('audio-panel');
+  p.style.display = p.style.display === 'none' ? 'block' : 'none';
+}
+// Close panel when clicking outside
+document.addEventListener('click', e => {
+  const p = document.getElementById('audio-panel');
+  if(p && p.style.display !== 'none' && !e.target.closest('#audio-panel') && e.target.id !== 'mute-btn') {
+    p.style.display = 'none';
+  }
+});
+function setBGVol(val) {
+  SFX.setBGVol(parseInt(val)/100);
+  document.getElementById('bgm-vol-label').textContent = val;
+}
+function setSFXVol(val) {
+  SFX.setSFXVol(parseInt(val)/100);
+  document.getElementById('sfx-vol-label').textContent = val;
+}
+function toggleBGMute() {
+  const m = SFX.toggleBGMute();
+  document.getElementById('bgm-mute').textContent = m ? '🔇' : '🔊';
+  document.getElementById('bgm-vol').disabled = m;
+}
+function toggleSFXMute() {
+  const m = SFX.toggleSFXMute();
+  document.getElementById('sfx-mute').textContent = m ? '🔇' : '🔊';
+  document.getElementById('sfx-vol').disabled = m;
+}
+
+// Click sounds: capture phase so stopPropagation in pickers doesn't block us
+document.addEventListener('click',e=>{
+  if(e.target.matches('.btn,.emoji-btn,.entries-btn,.remove-btn,.ap-mute'))SFX.click();
+},true);
+document.addEventListener('focusin',e=>{
+  if(e.target.matches('.name-input,.entries-input'))SFX.click();
+});
 </script>
 </body>
 </html>
