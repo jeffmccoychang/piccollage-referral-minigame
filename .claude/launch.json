@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Static File Server",
+      "runtimeExecutable": "/Applications/Cursor.app/Contents/Resources/app/resources/helpers/node",
+      "runtimeArgs": ["server.js"],
+      "port": 3000
+    }
+  ]
+}

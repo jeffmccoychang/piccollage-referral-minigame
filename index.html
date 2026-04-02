@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Referral Raffle — Horse Race</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg:#0a1a0d; --bg2:#0d2211; --panel:#1a4d25;
+    --g1:#4ecb71; --g2:#7ddf96; --g3:#b2f0c0;
+    --red:#e94560; --yel:#f5a623; --white:#d6f0db; --dim:#2d7a3a;
+    --px:'Press Start 2P',monospace;
+  }
+  body { font-family:var(--px); background:var(--bg); color:var(--white); min-height:100vh; padding:2rem 1rem 3rem; display:flex; flex-direction:column; align-items:center; }
+  body::after { content:''; position:fixed; inset:0; background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.07) 2px,rgba(0,0,0,0.07) 4px); pointer-events:none; z-index:998; }
+  #container { width:100%; max-width:900px; }
+  .header { text-align:center; margin-bottom:2rem; }
+  .header h1 { font-size:clamp(20px,5vw,40px); color:var(--g2); text-shadow:4px 4px 0 #061209,-2px -2px 0 var(--g1),2px 0 0 var(--red),-2px 0 0 var(--g3); letter-spacing:4px; line-height:1.3; margin-bottom:10px; }
+  .header .tagline { font-size:8px; letter-spacing:3px; color:var(--dim); margin-top:8px; }
+  @keyframes blink { 50%{opacity:0} }
+  .score-bar { display:flex; justify-content:space-between; font-size:8px; border:2px solid var(--panel); background:var(--bg2); padding:8px 14px; margin-bottom:1.2rem; letter-spacing:1px; }
+  .score-bar span { color:var(--yel); }
+  .panel { background:var(--bg2); border:3px solid var(--panel); outline:2px solid var(--g1); outline-offset:-5px; padding:1.4rem; margin-bottom:1.2rem; }
+  .panel-title { font-size:9px; letter-spacing:2px; color:var(--g2); margin-bottom:14px; }
+  .btn { padding:10px 18px; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; border:0; outline:none; background:var(--panel); color:var(--white); cursor:pointer; font-family:var(--px); box-shadow:0 4px 0 #071a10,4px 0 0 #0a2a14; transition:all 0.08s; }
+  .btn:hover { background:var(--dim); }
+  .btn:active { transform:translate(2px,3px); box-shadow:none; }
+  .btn.primary { background:var(--red); color:#fff; box-shadow:0 4px 0 #7a1828,4px 0 0 #9b2030; }
+  .btn.primary:hover { background:#ff6080; }
+  .btn.go { background:var(--panel); color:var(--g1); box-shadow:0 4px 0 #0d2211,4px 0 0 #0f3820; }
+  .btn.go:hover { background:var(--dim); }
+  .btn:disabled { opacity:0.35; cursor:default; transform:none; }
+
+  /* Setup */
+  .setup-table { width:100%; border-collapse:collapse; margin-bottom:12px; }
+  .setup-table th { font-size:7px; color:var(--dim); letter-spacing:2px; text-align:left; padding:0 6px 10px; }
+  .setup-table th.center { text-align:center; }
+  .setup-table td { padding:4px 6px; vertical-align:middle; }
+  .setup-table tr:not(:last-child) td { border-bottom:1px solid var(--panel); }
+  .emoji-btn { font-size:18px; background:var(--bg); border:2px solid var(--dim); padding:4px 8px; cursor:pointer; line-height:1; min-width:42px; text-align:center; }
+  .emoji-btn:hover { border-color:var(--g2); }
+  .name-input { width:100%; font-size:10px; padding:7px 10px; border:2px solid var(--dim); background:var(--bg); color:var(--white); font-family:var(--px); outline:none; }
+  .name-input:focus { border-color:var(--g2); }
+  .entries-wrap { display:flex; align-items:center; gap:6px; justify-content:center; }
+  .entries-btn { font-size:12px; background:var(--bg); border:2px solid var(--dim); color:var(--white); cursor:pointer; width:26px; height:26px; display:flex; align-items:center; justify-content:center; font-family:var(--px); flex-shrink:0; }
+  .entries-btn:hover { border-color:var(--g2); }
+  .entries-input { font-size:10px; color:var(--white); width:28px; text-align:center; background:var(--bg); border:2px solid var(--dim); font-family:var(--px); outline:none; padding:3px 0; }
+  .entries-input:focus { border-color:var(--g2); }
+  .remove-btn { font-size:9px; font-family:var(--px); background:none; border:2px solid var(--dim); color:var(--dim); cursor:pointer; padding:5px 8px; }
+  .remove-btn:hover { border-color:var(--red); color:var(--red); }
+  .setup-actions { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:4px; }
+  .emoji-picker span { font-size:20px; cursor:pointer; padding:4px; }
+  .emoji-picker span:hover { background:var(--panel); }
+
+  /* Race */
+  #track-wrap { background:#0d1f12; border:3px solid var(--panel); outline:2px solid var(--g1); outline-offset:-5px; padding:10px 0; margin-bottom:1.2rem; overflow:hidden; }
+  .lane { display:flex; align-items:center; height:38px; margin:2px 0; }
+  .lane:nth-child(odd) .track { background:rgba(78,203,113,0.04); }
+  .lane-lbl { width:120px; min-width:120px; font-size:7px; text-align:right; padding-right:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; letter-spacing:1px; }
+  .track { flex:1; position:relative; height:100%; }
+  .track-bg { position:absolute; inset:0; background:repeating-linear-gradient(90deg,transparent,transparent calc(10% - 1px),rgba(91,107,192,0.1) calc(10% - 1px),rgba(91,107,192,0.1) 10%); }
+  .horse-wrap { position:absolute; top:50%; transform:translateY(-50%); display:flex; align-items:center; gap:5px; will-change:left; }
+  .horse-emoji { font-size:20px; line-height:1; flex-shrink:0; display:inline-block; }
+  .name-tag { font-size:7px; white-space:nowrap; letter-spacing:1px; }
+  .finish-line { position:absolute; right:0; top:0; bottom:0; width:18px; background-image:repeating-conic-gradient(#fff 0% 25%,#000 0% 50%); background-size:9px 9px; border-left:2px solid #fff; z-index:2; }
+  @keyframes fade-out { from{opacity:1} to{opacity:0} }
+  .racing .name-tag { animation: fade-out 1s ease-out forwards; }
+
+  /* Winner screen */
+  #winner-screen { display:none; text-align:center; padding:3rem 2rem; background:var(--bg2); border:3px solid var(--panel); outline:3px solid var(--red); outline-offset:-6px; margin-bottom:1.2rem; }
+  #winner-screen .hs { font-size:8px; letter-spacing:3px; color:var(--yel); margin-bottom:16px; animation:blink 1.1s step-end infinite; }
+  #winner-screen .trophy { font-size:56px; display:block; margin-bottom:14px; }
+  #winner-screen .wlbl { font-size:8px; letter-spacing:3px; color:var(--dim); margin-bottom:10px; }
+  #winner-screen .wname { font-size:clamp(18px,4vw,32px); color:var(--red); text-shadow:3px 3px 0 #7a1828; letter-spacing:3px; line-height:1.4; margin-bottom:10px; }
+  #winner-screen .wsub { font-size:8px; letter-spacing:2px; color:var(--g1); margin-bottom:2rem; }
+  #winner-screen .winner-actions { display:flex; gap:12px; justify-content:center; flex-wrap:wrap; }
+
+  #remaining { font-size:8px; color:var(--dim); letter-spacing:1px; margin-bottom:8px; text-align:right; }
+  #remaining span { color:var(--g1); }
+  #controls { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+  #speed-wrap { display:flex; align-items:center; gap:8px; font-size:8px; letter-spacing:1px; color:var(--dim); margin-left:auto; }
+  input[type=range] { accent-color:var(--g2); cursor:pointer; width:80px; }
+  .confetti-piece { position:fixed; pointer-events:none; animation:fall linear forwards; }
+  @keyframes fall { to{transform:translateY(100vh) rotate(720deg);opacity:0} }
+  @keyframes gallop-bounce {
+    0%   { transform: translateY(0px) rotate(-1deg); }
+    50%  { transform: translateY(-3px) rotate(1deg); }
+    100% { transform: translateY(0px) rotate(-1deg); }
+  }
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>GRAND PRIX</h1>
+  <div class="tagline">— REFERRAL RAFFLE · HORSE RACE —</div>
+</div>
+<div id="container">
+  <div class="score-bar">
+    <div>1UP &nbsp;<span id="round-count">00</span></div>
+    <div>PLAYERS &nbsp;<span id="player-count">00</span></div>
+    <div>CREDIT &nbsp;<span>01</span></div>
+  </div>
+
+  <!-- SCREEN 1: Setup -->
+  <div id="setup-screen">
+    <div class="panel">
+      <div class="panel-title">&gt; ENTER PARTICIPANTS</div>
+      <table class="setup-table">
+        <thead>
+          <tr>
+            <th style="width:50px">EMOJI</th>
+            <th>NAME</th>
+            <th class="center" style="width:110px">ENTRIES</th>
+            <th style="width:36px"></th>
+          </tr>
+        </thead>
+        <tbody id="player-rows"></tbody>
+      </table>
+      <div class="setup-actions">
+        <button class="btn go" onclick="addPlayerRow()">+ ADD PLAYER</button>
+        <button class="btn primary" onclick="startSetup()">START RACE &gt;</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 2: Race -->
+  <div id="race-screen" style="display:none">
+    <div id="remaining">REMAINING: <span id="remaining-count">0</span> PLAYERS</div>
+    <div id="track-wrap"><div id="track"></div></div>
+    <div class="panel" style="padding:1rem 1.25rem">
+      <div id="controls">
+        <button class="btn primary" id="race-btn" onclick="startRace()">START RACE &gt;</button>
+        <button class="btn" onclick="resetRace()">NEW RACE</button>
+        <div id="speed-wrap">SPD: <input type="range" min="1" max="5" value="1" id="speed-slider" step="1"> <span id="speed-label">1</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SCREEN 3: Winner -->
+  <div id="winner-screen" style="display:none">
+    <div class="panel" style="text-align:center; padding:3rem 2rem; outline-color:var(--red);">
+      <div class="hs" style="font-size:8px;letter-spacing:3px;color:var(--yel);margin-bottom:16px;animation:blink 1.1s step-end infinite;">★ NEW HIGH SCORE ★</div>
+      <span style="font-size:56px;display:block;margin-bottom:14px;">🏆</span>
+      <div style="font-size:8px;letter-spacing:3px;color:var(--dim);margin-bottom:10px;">WINNER</div>
+      <div id="winner-name" style="font-size:clamp(18px,4vw,32px);color:var(--red);text-shadow:3px 3px 0 #7a1828;letter-spacing:3px;line-height:1.4;margin-bottom:10px;"></div>
+      <div style="font-size:8px;letter-spacing:2px;color:var(--g1);margin-bottom:2rem;">WINS THE RAFFLE!</div>
+      <div style="display:flex;gap:12px;justify-content:center;flex-wrap:wrap;">
+        <button class="btn go" id="next-btn" onclick="goNextRace()">NEXT RACE &gt;</button>
+        <button class="btn" onclick="resetRace()">NEW RACE</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+const COLORS = ['#4ecb71','#e94560','#f5a623','#7ddf96','#80dfff','#ffb347','#ff6eb4','#b2f0c0','#f08080','#c8a2c8','#4ecb71','#e94560','#f5a623','#7ddf96','#80dfff','#ffb347','#ff6eb4','#b2f0c0','#f08080','#c8a2c8'];
+const EMOJI_OPTIONS = ['🐴','🦄','🐎','🏇','🐲','🐯','🦊','🐺','🐻','🦁','🐸','🐧','🦅','🐬','🦋','⚡','🔥','💎','🌟','🚀','🎯','🎪','🎠','🎡','🏆','👑','🌈','🍀','🎸','🎺'];
+
+// State
+let originalPlayers  = []; // [{name, emoji, entries, color}] — set once, never mutated
+let remainingPlayers = []; // copy filtered each round
+let lanes            = []; // expanded for current round [{name,emoji,color}]
+let pos=[], vel=[], phase=[], phaseTimer=[];
+let finished=false, animId=null, winnerIdx=-1, raceStarted=false, roundNum=0;
+let activePicker=null;
+
+// ── Helpers ───────────────────────────────────────────────
+function showScreen(name) {
+  document.getElementById('setup-screen').style.display  = name==='setup'  ? 'block' : 'none';
+  document.getElementById('race-screen').style.display   = name==='race'   ? 'block' : 'none';
+  document.getElementById('winner-screen').style.display = name==='winner' ? 'block' : 'none';
+}
+
+function updateHUD() {
+  document.getElementById('round-count').textContent     = String(roundNum).padStart(2,'0');
+  document.getElementById('player-count').textContent    = String(remainingPlayers.length).padStart(2,'0');
+  document.getElementById('remaining-count').textContent = remainingPlayers.length;
+}
+
+// ── Emoji picker ──────────────────────────────────────────
+function togglePicker(btn, e) {
+  e.stopPropagation();
+  // If clicking the same button, just close
+  if (activePicker && activePicker.btn === btn) { closePicker(); return; }
+  closePicker();
+  const tr = btn.closest('tr');
+  const pickerTr = document.createElement('tr');
+  const pickerTd = document.createElement('td');
+  pickerTd.colSpan = 4;
+  pickerTd.style.cssText = 'padding:4px 6px 8px;';
+  const grid = document.createElement('div');
+  grid.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;background:var(--bg);border:2px solid var(--g1);padding:8px;';
+  EMOJI_OPTIONS.forEach(em => {
+    const sp = document.createElement('span');
+    sp.textContent = em;
+    sp.style.cssText = 'font-size:22px;cursor:pointer;padding:3px;';
+    sp.onmouseover = () => sp.style.background = 'var(--panel)';
+    sp.onmouseout  = () => sp.style.background = '';
+    sp.onclick = ev => { ev.stopPropagation(); btn.textContent = em; closePicker(); };
+    grid.appendChild(sp);
+  });
+  pickerTd.appendChild(grid);
+  pickerTr.appendChild(pickerTd);
+  tr.after(pickerTr);
+  activePicker = { btn, pickerTr };
+}
+
+function closePicker() {
+  if (activePicker) { activePicker.pickerTr.remove(); activePicker = null; }
+}
+document.addEventListener('click', closePicker);
+
+function getUsedEmojis() { return [...document.querySelectorAll('.emoji-btn')].map(b=>b.textContent); }
+function nextUnusedEmoji() { const used=getUsedEmojis(); return EMOJI_OPTIONS.find(e=>!used.includes(e))||EMOJI_OPTIONS[0]; }
+function cycleEmoji(row, dir) {
+  const btn=row.querySelector('.emoji-btn');
+  const cur=EMOJI_OPTIONS.indexOf(btn.textContent);
+  btn.textContent=EMOJI_OPTIONS[(cur+dir+EMOJI_OPTIONS.length)%EMOJI_OPTIONS.length];
+}
+
+// ── Setup rows ────────────────────────────────────────────
+function addPlayerRow(name='', emoji=null, entries=1) {
+  const tbody=document.getElementById('player-rows');
+  const idx=tbody.children.length;
+  const em=emoji||nextUnusedEmoji();
+  const tr=document.createElement('tr');
+
+  const tdE=document.createElement('td');
+  const emojiBtn=document.createElement('button'); emojiBtn.className='emoji-btn'; emojiBtn.textContent=em;
+  emojiBtn.onclick=e=>togglePicker(emojiBtn,e); tdE.appendChild(emojiBtn);
+
+  const tdN=document.createElement('td');
+  const input=document.createElement('input'); input.type='text'; input.className='name-input';
+  input.placeholder='Player '+(idx+1); input.value=name; input.maxLength=20;
+  input.addEventListener('keydown', e=>{
+    const all=[...document.querySelectorAll('.name-input')], i=all.indexOf(input);
+    if(e.key==='ArrowDown'){e.preventDefault();if(i<all.length-1)all[i+1].focus();else{addPlayerRow();setTimeout(()=>{const u=[...document.querySelectorAll('.name-input')];u[u.length-1].focus();},0);}}
+    if(e.key==='ArrowUp'){e.preventDefault();if(i>0)all[i-1].focus();}
+    if(e.key==='ArrowLeft'&&input.selectionStart===0){e.preventDefault();cycleEmoji(tr,-1);}
+    if(e.key==='ArrowRight'&&input.selectionStart===input.value.length){e.preventDefault();cycleEmoji(tr,1);}
+    if(e.key==='Backspace'&&input.value===''){e.preventDefault();if(document.getElementById('player-rows').children.length<=2)return;const prev=i>0?all[i-1]:all[1];tr.remove();closePicker();if(prev)prev.focus();}
+    if(e.key==='Enter'){e.preventDefault();if(i<all.length-1)all[i+1].focus();else startSetup();}
+  });
+  tdN.appendChild(input);
+
+  const tdEn=document.createElement('td');
+  const wrap=document.createElement('div'); wrap.className='entries-wrap';
+  const minus=document.createElement('button'); minus.className='entries-btn'; minus.textContent='−';
+  const valIn=document.createElement('input'); valIn.type='text'; valIn.className='entries-input'; valIn.value=entries; valIn.maxLength=2;
+  valIn.addEventListener('input',()=>{const v=parseInt(valIn.value);if(isNaN(v)||v<1)valIn.value='';else if(v>20)valIn.value=20;});
+  valIn.addEventListener('blur',()=>{if(!valIn.value||parseInt(valIn.value)<1)valIn.value=1;});
+  const plus=document.createElement('button'); plus.className='entries-btn'; plus.textContent='+';
+  minus.onclick=()=>{const v=parseInt(valIn.value)||1;if(v>1)valIn.value=v-1;};
+  plus.onclick=()=>{const v=parseInt(valIn.value)||1;if(v<20)valIn.value=v+1;};
+  wrap.appendChild(minus); wrap.appendChild(valIn); wrap.appendChild(plus); tdEn.appendChild(wrap);
+
+  const tdR=document.createElement('td');
+  const removeBtn=document.createElement('button'); removeBtn.className='remove-btn'; removeBtn.textContent='✕';
+  removeBtn.onclick=()=>{if(document.getElementById('player-rows').children.length<=2){alert('Minimum 2 players required.');return;}tr.remove();closePicker();};
+  tdR.appendChild(removeBtn);
+
+  tr.appendChild(tdE); tr.appendChild(tdN); tr.appendChild(tdEn); tr.appendChild(tdR);
+  tbody.appendChild(tr);
+}
+
+function getPlayersFromForm() {
+  return [...document.querySelectorAll('#player-rows tr')].map(row=>({
+    name:  row.querySelector('.name-input').value.trim(),
+    emoji: row.querySelector('.emoji-btn').textContent,
+    entries: parseInt(row.querySelector('.entries-input').value)||1
+  })).filter(p=>p.name);
+}
+
+function resetForm() {
+  document.getElementById('player-rows').innerHTML = '';
+  for (let i = 0; i < 5; i++) addPlayerRow();
+}
+
+// ── Start ─────────────────────────────────────────────────
+function startSetup() {
+  const players=getPlayersFromForm();
+  if(players.length<2){alert('Please enter at least 2 player names.');return;}
+  originalPlayers=players.slice(0,30).map((p,i)=>({...p,color:COLORS[i%COLORS.length]}));
+  remainingPlayers=originalPlayers.map(p=>({...p}));
+  roundNum=0;
+  buildRound();
+  showScreen('race');
+}
+
+// Build lanes from remainingPlayers and show race screen
+function buildRound() {
+  lanes=[];
+  remainingPlayers.forEach(p=>{
+    for(let e=0;e<p.entries;e++) lanes.push({name:p.name,emoji:p.emoji,color:p.color});
+  });
+
+  const trackEl=document.getElementById('track');
+  trackEl.innerHTML='';
+  const n=lanes.length;
+  pos=[]; vel=[]; phase=[]; phaseTimer=[];
+  for(let i=0;i<n;i++){
+    pos.push(0); vel.push(0.8+Math.random()*0.4);
+    phase.push('cruise'); phaseTimer.push(40+Math.floor(Math.random()*80));
+  }
+  finished=false; winnerIdx=-1; raceStarted=false;
+  document.getElementById('race-btn').disabled=false;
+  document.getElementById('race-btn').textContent='START RACE >';
+  updateHUD();
+
+  lanes.forEach((lane,i)=>{
+    const laneEl=document.createElement('div'); laneEl.className='lane';
+    const labelEl=document.createElement('div'); labelEl.className='lane-lbl'; labelEl.title=lane.name; labelEl.textContent=lane.name; labelEl.style.color=lane.color;
+    const trackDiv=document.createElement('div'); trackDiv.className='track'; trackDiv.id='t'+i;
+    const bgDiv=document.createElement('div'); bgDiv.className='track-bg';
+    const hw=document.createElement('div'); hw.className='horse-wrap'; hw.id='h'+i; hw.style.left='2px';
+    const emoji=document.createElement('span'); emoji.className='horse-emoji'; emoji.textContent=lane.emoji;
+    const nameTag=document.createElement('span'); nameTag.className='name-tag'; nameTag.style.color=lane.color; nameTag.textContent=lane.name;
+    const fl=document.createElement('div'); fl.className='finish-line';
+    hw.appendChild(emoji); hw.appendChild(nameTag);
+    trackDiv.appendChild(bgDiv); trackDiv.appendChild(hw); trackDiv.appendChild(fl);
+    laneEl.appendChild(labelEl); laneEl.appendChild(trackDiv);
+    trackEl.appendChild(laneEl);
+  });
+}
+
+function getTrackW() {
+  const t=document.getElementById('t0'),h=document.getElementById('h0');
+  return t?Math.max(t.clientWidth-18-Math.round((h?h.offsetWidth:70)*0.4),200):400;
+}
+
+// ── Race ──────────────────────────────────────────────────
+document.getElementById('speed-slider').oninput=e=>document.getElementById('speed-label').textContent=e.target.value;
+
+function startRace() {
+  if(finished||raceStarted) return;
+  raceStarted=true; roundNum++;
+  document.getElementById('race-btn').disabled=true;
+  document.getElementById('round-count').textContent=String(roundNum).padStart(2,'0');
+  document.querySelectorAll('.horse-wrap').forEach(el => {
+    el.classList.add('racing');
+    const emoji = el.querySelector('.horse-emoji');
+    if (emoji) emoji.style.animation = 'gallop-bounce 0.28s ease-in-out infinite alternate';
+  });
+
+  const n=lanes.length;
+  winnerIdx=Math.floor(Math.random()*n);
+  const BASE=1.2*parseInt(document.getElementById('speed-slider').value);
+  for(let i=0;i<n;i++){vel[i]=BASE*(0.7+Math.random()*0.6);phase[i]='cruise';phaseTimer[i]=40+Math.floor(Math.random()*80);}
+  let done=false;
+
+  function tick(){
+    if(done) return;
+    const tw=getTrackW();
+    for(let i=0;i<n;i++){
+      if(pos[i]>=tw) continue;
+      if(--phaseTimer[i]<=0){
+        const r=Math.random();
+        phase[i]=phase[i]==='surge'?(r<0.6?'cruise':'tired'):phase[i]==='tired'?(r<0.7?'cruise':'surge'):(r<0.4?'surge':r<0.7?'cruise':'tired');
+        phaseTimer[i]=40+Math.floor(Math.random()*80);
+      }
+      const progress=pos[i]/tw;
+      let tv=(i===winnerIdx&&progress>0.72)?BASE*1.55:BASE*(phase[i]==='surge'?1.4:phase[i]==='tired'?0.55:1.0)*(0.85+Math.random()*0.3);
+      if(i!==winnerIdx&&progress>0.85) tv*=0.5;
+      vel[i]=Math.max(0.2,vel[i]+(tv-vel[i])*0.08+(Math.random()-0.5)*0.15);
+      pos[i]=Math.min(tw,pos[i]+vel[i]);
+      const hw=document.getElementById('h'+i);
+      if(hw) hw.style.left=Math.round(pos[i])+'px';
+      if(pos[i]>=tw&&!done){done=true;finished=true;declareWinner(lanes[i].name);return;}
+    }
+    animId=requestAnimationFrame(tick);
+  }
+  animId=requestAnimationFrame(tick);
+}
+
+function declareWinner(winnerName) {
+  // Grab emoji before filtering
+  const winnerLane=lanes.find(l=>l.name===winnerName);
+  const winnerEmoji=winnerLane?winnerLane.emoji:'🏆';
+  // Remove winner from remainingPlayers
+  remainingPlayers=remainingPlayers.filter(p=>p.name!==winnerName);
+  // Show winner screen
+  document.getElementById('winner-name').textContent=winnerName;
+  document.getElementById('next-btn').style.display=remainingPlayers.length>=2?'inline-block':'none';
+  showScreen('winner');
+  spawnConfetti(winnerEmoji);
+}
+
+function goNextRace() {
+  if(animId) cancelAnimationFrame(animId);
+  buildRound();          // rebuild track from updated remainingPlayers
+  showScreen('race');    // show race screen (winner already removed)
+}
+
+function resetRace() {
+  if(animId) cancelAnimationFrame(animId);
+  finished=false; raceStarted=false; winnerIdx=-1; roundNum=0;
+  originalPlayers=[]; remainingPlayers=[]; lanes=[];
+  document.getElementById('player-rows').innerHTML='';
+  for (let i=0; i<3; i++) addPlayerRow();
+  showScreen('setup');
+}
+
+function spawnConfetti(winnerEmoji='🏆') {
+  const cols=['#4ecb71','#e94560','#f5a623','#7ddf96','#80dfff','#ff6eb4'];
+  // Coloured square pieces
+  for(let i=0;i<80;i++){
+    const el=document.createElement('div'); el.className='confetti-piece';
+    const s=6+Math.random()*8;
+    el.style.cssText=`width:${s}px;height:${s}px;background:${cols[i%cols.length]};left:${Math.random()*100}%;top:-20px;animation-duration:${1.8+Math.random()*2.5}s;animation-delay:${Math.random()*0.8}s;`;
+    document.body.appendChild(el); setTimeout(()=>el.remove(),5500);
+  }
+  // Winner emoji pieces sprinkled throughout
+  for(let i=0;i<20;i++){
+    const el=document.createElement('span'); el.className='confetti-piece';
+    const s=18+Math.random()*18;
+    el.textContent=winnerEmoji;
+    el.style.cssText=`font-size:${s}px;background:none;left:${Math.random()*100}%;top:-30px;animation-duration:${2+Math.random()*2.5}s;animation-delay:${Math.random()*1.2}s;`;
+    document.body.appendChild(el); setTimeout(()=>el.remove(),6000);
+  }
+}addPlayerRow(); addPlayerRow(); addPlayerRow();
+</script>
+</body>
+</html>
