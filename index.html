@@ -126,6 +126,16 @@
   #finish-snapshot-img { display:block; width:100%; image-rendering:pixelated; }
   #finish-snapshot-img[src=""], #finish-snapshot-img:not([src]) { display:none; }
   #winner-name { padding:10px 14px 12px; font-size:clamp(16px,3.5vw,26px); color:var(--red); text-shadow:3px 3px 0 #7a1828; letter-spacing:3px; line-height:1.4; border-top:2px solid var(--panel); background:var(--bg2); }
+
+  /* New Race confirmation modal */
+  #new-race-modal { display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.75); align-items:center; justify-content:center; }
+  #new-race-modal.open { display:flex; }
+  #new-race-modal-box { background:var(--bg2); border:3px solid var(--panel); outline:2px solid var(--red); outline-offset:-5px; padding:2rem 1.8rem; max-width:380px; width:90%; text-align:center; }
+  #new-race-modal-box .modal-icon { font-size:36px; display:block; margin-bottom:14px; }
+  #new-race-modal-box .modal-title { font-size:10px; letter-spacing:3px; color:var(--yel); margin-bottom:14px; }
+  #new-race-modal-box .modal-body { font-size:8px; line-height:1.9; color:var(--white); letter-spacing:1px; margin-bottom:20px; }
+  #new-race-modal-box .modal-body span { color:var(--g1); }
+  #new-race-modal-box .modal-actions { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
 </style>
 </head>
 <body>
@@ -228,6 +238,23 @@
     </div>
   </div>
 
+</div>
+
+<!-- New Race confirmation modal -->
+<div id="new-race-modal">
+  <div id="new-race-modal-box">
+    <span class="modal-icon">⚠️</span>
+    <div class="modal-title">HOLD UP!</div>
+    <div class="modal-body">
+      There are still <span id="modal-remaining-count">0</span> players left to race!<br><br>
+      Starting a new race will discard all current progress.<br><br>
+      Are you sure?
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeNewRaceModal()">&#9664; KEEP RACING</button>
+      <button class="btn primary" onclick="confirmResetRace()">NEW RACE</button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -864,6 +891,16 @@ function goNextRace() {
 }
 
 function resetRace() {
+  if (remainingPlayers.length >= 2) {
+    document.getElementById('modal-remaining-count').textContent = remainingPlayers.length;
+    document.getElementById('new-race-modal').classList.add('open');
+    return;
+  }
+  confirmResetRace();
+}
+
+function confirmResetRace() {
+  closeNewRaceModal();
   if(animId) cancelAnimationFrame(animId);
   cleanupRaceEffects();
   finished=false; raceStarted=false; winnerIdx=-1; roundNum=0;
@@ -871,6 +908,10 @@ function resetRace() {
   document.getElementById('player-rows').innerHTML='';
   for (let i=0; i<3; i++) addPlayerRow();
   showScreen('setup');
+}
+
+function closeNewRaceModal() {
+  document.getElementById('new-race-modal').classList.remove('open');
 }
 
 function spawnConfetti(winnerEmoji='🏆') {
