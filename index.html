@@ -82,10 +82,11 @@
 
   /* Standings */
   .standings-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(190px,1fr)); gap:0 20px; }
-  .standing-row { display:flex; align-items:center; gap:6px; padding:3px 0; font-size:7px; letter-spacing:1px; border-bottom:1px solid var(--panel); }
-  .standing-rank { color:var(--dim); width:18px; text-align:right; flex-shrink:0; }
-  .standing-emoji { font-size:13px; flex-shrink:0; }
-  .standing-name { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  #standings { position:relative; overflow:hidden; }
+  .standing-row { display:flex; align-items:center; gap:7px; padding:4px 0; font-size:11px; letter-spacing:1px; border-bottom:1px solid var(--panel); position:absolute; width:100%; top:0; left:0; transition:transform 0.35s ease; }
+  .standing-rank { color:var(--dim); font-size:13px; line-height:1; flex-shrink:0; }
+  .standing-emoji { font-size:20px; flex-shrink:0; }
+  .standing-name { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11px; }
   .standing-bar { width:44px; height:5px; background:var(--panel); border:1px solid var(--dim); flex-shrink:0; }
   .standing-fill { height:100%; transition:width 0.12s; }
 
@@ -108,9 +109,8 @@
   /* Race layout: track left, standings right */
   #race-layout { display:flex; gap:12px; align-items:flex-start; margin-bottom:1.2rem; }
   #race-layout #track-wrap { flex:1; min-width:0; margin-bottom:0; }
-  #standings-side { width:210px; flex-shrink:0; margin-bottom:0; padding:0.8rem 0.9rem; }
+  #standings-side { width:240px; flex-shrink:0; margin-bottom:0; padding:0.8rem 0.9rem; }
   #standings-side .panel-title { margin-bottom:8px; }
-  #standings-side .standing-row { gap:5px; }
   @media (max-width:700px) { #race-layout { flex-direction:column; } #standings-side { width:100%; } }
 
   .leader-crown {
@@ -515,7 +515,7 @@ function buildRound() {
   const n=lanes.length;
   pos=[]; vel=[]; phase=[]; phaseTimer=[];
   for(let i=0;i<n;i++){
-    pos.push(i * 4);  // small stagger so horses spread immediately
+    pos.push(0);  // all start at same position; visual lineup handled by placeHorsesAtStart
     vel.push(0.8+Math.random()*0.4);
     phase.push('cruise');
     phaseTimer.push(40+Math.floor(Math.random()*80));
@@ -554,7 +554,34 @@ function buildRound() {
   });
 
   buildStandings();
-  requestAnimationFrame(updateAllHorsePositions);
+  requestAnimationFrame(placeHorsesAtStart);
+}
+
+function placeHorsesAtStart() {
+  const path = document.getElementById('racing-line-path');
+  if (!path) return;
+  const n = lanes.length;
+  const vbW = selectedTrack.vw + PAD * 2;
+  const vbH = selectedTrack.vh + PAD * 2;
+
+  // Compute tangent at start, then use the normal to line horses up side-by-side
+  const p0 = path.getPointAtLength(0);
+  const p1 = path.getPointAtLength(3);
+  const dx = p1.x - p0.x, dy = p1.y - p0.y;
+  const len = Math.sqrt(dx * dx + dy * dy) || 1;
+  // Normal perpendicular to track direction
+  const nx = -dy / len, ny = dx / len;
+
+  const spacing = 4; // SVG units between horses — tight stack, stays within track
+  for (let i = 0; i < n; i++) {
+    const hw = document.getElementById('h' + i);
+    if (!hw) continue;
+    const offset = (i - (n - 1) / 2) * spacing;
+    const x = p0.x + PAD + nx * offset;
+    const y = p0.y + PAD + ny * offset;
+    hw.style.left = (x / vbW * 100) + '%';
+    hw.style.top  = (y / vbH * 100) + '%';
+  }
 }
 
 function getTrackW() {
@@ -579,21 +606,46 @@ function updateAllHorsePositions() {
 }
 
 // ── Standings ─────────────────────────────────────────────
+const STANDINGS_ROW_H = 31;
+const STANDINGS_MEDALS = ['🥇','🥈','🥉'];
+const STANDINGS_RANK_W = 42; // px width reserved for fixed rank labels
+
 function buildStandings() {
   const container = document.getElementById('standings');
   container.innerHTML = '';
+  const maxShow = Math.min(lanes.length, 10);
+  container.style.height = (maxShow * STANDINGS_ROW_H) + 'px';
+
+  // Fixed rank labels layer (left side, never moves)
+  const ranksEl = document.createElement('div');
+  ranksEl.style.cssText = `position:absolute;left:0;top:0;width:${STANDINGS_RANK_W}px;`;
+  for (let rank = 0; rank < maxShow; rank++) {
+    const lbl = document.createElement('div');
+    lbl.className = 'standing-rank';
+    lbl.style.cssText = `position:absolute;top:${rank * STANDINGS_ROW_H}px;width:${STANDINGS_RANK_W}px;height:${STANDINGS_ROW_H}px;display:flex;align-items:center;justify-content:center;`;
+    lbl.textContent = rank < 3 ? STANDINGS_MEDALS[rank] : '#' + (rank + 1);
+    ranksEl.appendChild(lbl);
+  }
+  container.appendChild(ranksEl);
+
+  // Animated horse rows layer (right side, slides up/down)
+  const horsesEl = document.createElement('div');
+  horsesEl.id = 'standings-horses';
+  horsesEl.style.cssText = `position:absolute;left:${STANDINGS_RANK_W}px;right:0;top:0;`;
   lanes.forEach((lane, i) => {
     const row = document.createElement('div');
     row.className = 'standing-row';
     row.id = 'sr' + i;
+    row.style.transform = `translateY(${i * STANDINGS_ROW_H}px)`;
+    if (i >= 10) row.style.display = 'none';
     row.innerHTML = `
-      <span class="standing-rank">#-</span>
       <span class="standing-emoji">${lane.emoji}</span>
       <span class="standing-name" style="color:${lane.color}">${lane.name}</span>
       <div class="standing-bar"><div class="standing-fill" id="sb${i}" style="background:${lane.color};width:0%"></div></div>
     `;
-    container.appendChild(row);
+    horsesEl.appendChild(row);
   });
+  container.appendChild(horsesEl);
 }
 
 function updateStandings() {
@@ -602,7 +654,12 @@ function updateStandings() {
   order.forEach((laneIdx, rank) => {
     const row = document.getElementById('sr' + laneIdx);
     if (!row) return;
-    row.querySelector('.standing-rank').textContent = '#' + (rank + 1);
+    if (rank < 10) {
+      row.style.display = '';
+      row.style.transform = `translateY(${rank * STANDINGS_ROW_H}px)`;
+    } else {
+      row.style.display = 'none';
+    }
     const fill = document.getElementById('sb' + laneIdx);
     if (fill) fill.style.width = Math.min(100, pos[laneIdx] / tw * 100) + '%';
   });
@@ -699,6 +756,12 @@ function activateSlowMo() {
   const trackWrapEl = document.getElementById('track-wrap');
   if (!path || !trackWrapEl) return;
 
+  // Hide standings panel and controls so they don't overlay the zoomed track
+  const standingsSide = document.getElementById('standings-side');
+  if (standingsSide) standingsSide.style.visibility = 'hidden';
+  const controls = document.getElementById('controls');
+  if (controls) controls.style.visibility = 'hidden';
+
   // Compute finish line position as % within track-wrap
   const vbW = selectedTrack.vw + PAD * 2;
   const vbH = selectedTrack.vh + PAD * 2;
@@ -707,8 +770,17 @@ function activateSlowMo() {
   const originY = ((pt.y + PAD) / vbH * 100).toFixed(1) + '%';
 
   trackWrapEl.style.transformOrigin = `${originX} ${originY}`;
-  trackWrapEl.style.transition = 'transform 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-  trackWrapEl.style.transform = 'scale(2.2)';
+  // Pin an explicit scale(1) "from" state with no transition, then animate on the next
+  // two frames — this gives the browser a full render cycle to register the starting
+  // point before the transition fires, making the zoom reliable across all races.
+  trackWrapEl.style.transition = 'none';
+  trackWrapEl.style.transform = 'scale(1)';
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      trackWrapEl.style.transition = 'transform 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+      trackWrapEl.style.transform = 'scale(2.2)';
+    });
+  });
 }
 
 function deactivateSlowMo() {
@@ -716,6 +788,12 @@ function deactivateSlowMo() {
   if (!trackWrapEl) return;
   trackWrapEl.style.transition = 'transform 0.55s ease-in';
   trackWrapEl.style.transform = 'scale(1)';
+
+  // Restore standings panel and controls after zoom
+  const standingsSide = document.getElementById('standings-side');
+  if (standingsSide) standingsSide.style.visibility = '';
+  const controls = document.getElementById('controls');
+  if (controls) controls.style.visibility = '';
 }
 
 function captureFinishSnapshot(callback) {
