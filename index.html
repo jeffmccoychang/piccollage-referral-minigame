@@ -9,16 +9,16 @@
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --bg:#0a1a0d; --bg2:#0d2211; --panel:#1a4d25;
-    --g1:#4ecb71; --g2:#7ddf96; --g3:#b2f0c0;
-    --red:#e94560; --yel:#f5a623; --white:#d6f0db; --dim:#2d7a3a;
+    --bg:#0d0520; --bg2:#160835; --panel:#4F0A95;
+    --g1:#771FE5; --g2:#BF98F1; --g3:#DBBFFF;
+    --red:#FF5621; --yel:#FFAF96; --white:#EDDFFF; --dim:#450E9D;
     --px:'Press Start 2P',monospace;
   }
   body { font-family:var(--px); background:var(--bg); color:var(--white); min-height:100vh; padding:2rem 1rem 3rem; display:flex; flex-direction:column; align-items:center; }
   body::after { content:''; position:fixed; inset:0; background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.07) 2px,rgba(0,0,0,0.07) 4px); pointer-events:none; z-index:998; }
   #container { width:100%; max-width:900px; }
   .header { text-align:center; margin-bottom:2rem; }
-  .header h1 { font-size:clamp(20px,5vw,40px); color:var(--g2); text-shadow:4px 4px 0 #061209,-2px -2px 0 var(--g1),2px 0 0 var(--red),-2px 0 0 var(--g3); letter-spacing:4px; line-height:1.3; margin-bottom:10px; }
+  .header h1 { font-size:clamp(20px,5vw,40px); color:var(--g2); text-shadow:4px 4px 0 #08021a,-2px -2px 0 var(--g1),2px 0 0 var(--red),-2px 0 0 var(--g3); letter-spacing:4px; line-height:1.3; margin-bottom:10px; }
   .header .tagline { font-size:8px; letter-spacing:3px; color:var(--dim); margin-top:8px; }
   @keyframes blink { 50%{opacity:0} }
   .score-bar { display:flex; justify-content:space-between; align-items:center; font-size:8px; border:2px solid var(--panel); background:var(--bg2); padding:8px 14px; margin-bottom:1.2rem; letter-spacing:1px; position:relative; }
@@ -33,13 +33,15 @@
   #audio-panel input[type=range]:disabled { opacity:0.3; cursor:default; }
   .panel { background:var(--bg2); border:3px solid var(--panel); outline:2px solid var(--g1); outline-offset:-5px; padding:1.4rem; margin-bottom:1.2rem; }
   .panel-title { font-size:9px; letter-spacing:2px; color:var(--g2); margin-bottom:14px; }
-  .btn { padding:10px 18px; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; border:0; outline:none; background:var(--panel); color:var(--white); cursor:pointer; font-family:var(--px); box-shadow:0 4px 0 #071a10,4px 0 0 #0a2a14; transition:all 0.08s; }
+  .btn { padding:10px 18px; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; border:0; outline:none; background:var(--panel); color:var(--white); cursor:pointer; font-family:var(--px); box-shadow:0 4px 0 #200540,4px 0 0 #2a0655; transition:all 0.08s; }
   .btn:hover { background:var(--dim); }
   .btn:active { transform:translate(2px,3px); box-shadow:none; }
-  .btn.primary { background:var(--red); color:#fff; box-shadow:0 4px 0 #7a1828,4px 0 0 #9b2030; }
-  .btn.primary:hover { background:#ff6080; }
-  .btn.go { background:var(--panel); color:var(--g1); box-shadow:0 4px 0 #0d2211,4px 0 0 #0f3820; }
+  .btn.primary { background:var(--red); color:#fff; box-shadow:0 4px 0 #8b3010,4px 0 0 #9b3a15; }
+  .btn.primary:hover { background:#ff7a4a; }
+  .btn.go { background:var(--panel); color:var(--g1); box-shadow:0 4px 0 #0a0520,4px 0 0 #120528; }
   .btn.go:hover { background:var(--dim); }
+  #next-btn { background:#2a9d3a; color:#fff; box-shadow:0 4px 0 #1a6124,4px 0 0 #1e7a2c; }
+  #next-btn:hover { background:#38c44d; }
   .btn:disabled { opacity:0.35; cursor:default; transform:none; }
 
   /* Setup */
@@ -127,7 +129,7 @@
   #finish-snapshot-wrap { display:none; margin:0 auto 1.2rem; max-width:400px; border:3px solid var(--panel); outline:2px solid var(--g1); outline-offset:-5px; overflow:hidden; }
   #finish-snapshot-img { display:block; width:100%; image-rendering:pixelated; }
   #finish-snapshot-img[src=""], #finish-snapshot-img:not([src]) { display:none; }
-  #winner-name { padding:10px 14px 12px; font-size:clamp(16px,3.5vw,26px); color:var(--red); text-shadow:3px 3px 0 #7a1828; letter-spacing:3px; line-height:1.4; border-top:2px solid var(--panel); background:var(--bg2); }
+  #winner-name { padding:10px 14px 12px; font-size:clamp(16px,3.5vw,26px); color:var(--red); text-shadow:3px 3px 0 #8b3010; letter-spacing:3px; line-height:1.4; border-top:2px solid var(--panel); background:var(--bg2); }
 
   /* New Race confirmation modal */
   #new-race-modal { display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.75); align-items:center; justify-content:center; }
@@ -139,8 +141,152 @@
   #new-race-modal-box .modal-body span { color:var(--g1); }
   #new-race-modal-box .modal-actions { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
 </style>
+
+<style>
+  /* ── CRT Monitor Redesign ──────────────────────────────── */
+
+  /* Dark room backdrop */
+  body {
+    background:#06030f;
+    padding:3rem 1rem 4rem;
+    justify-content:center;
+    align-items:center;
+  }
+  /* Kill old body scanlines — replaced by #crt-screen::before */
+  body::after { display:none; }
+
+  /* ── Bezel ── */
+  #crt-bezel {
+    width:100%;
+    max-width:1020px;
+    background:linear-gradient(160deg,#272727 0%,#141414 55%,#1e1e1e 100%);
+    border-radius:28px;
+    padding:44px 52px 72px;
+    position:relative;
+    box-shadow:
+      inset 0 3px 6px rgba(255,255,255,0.06),
+      inset 0 -4px 8px rgba(0,0,0,0.6),
+      0 40px 100px rgba(0,0,0,0.97),
+      0 0 0 3px #0e0e0e,
+      0 0 0 5px #2e2e2e;
+  }
+
+  /* Brand label engraved on the bezel bottom */
+  #crt-bezel::before {
+    content:'PICCO · GRAND PRIX';
+    position:absolute;
+    bottom:24px;
+    left:50%;
+    transform:translateX(-50%);
+    font-family:var(--px);
+    font-size:5px;
+    letter-spacing:5px;
+    color:#383838;
+    white-space:nowrap;
+  }
+
+  /* Power LED */
+  #crt-bezel::after {
+    content:'';
+    position:absolute;
+    bottom:28px;
+    right:64px;
+    width:7px;
+    height:7px;
+    border-radius:50%;
+    background:#771FE5;
+    box-shadow:0 0 6px #771FE5,0 0 16px #771FE5;
+    animation:led-pulse 3s ease-in-out infinite alternate;
+  }
+  @keyframes led-pulse {
+    to { box-shadow:0 0 3px #450E9D,0 0 6px #450E9D; opacity:0.55; }
+  }
+
+  /* ── Screen ── */
+  #crt-screen {
+    background:var(--bg);
+    border-radius:12px;
+    overflow:hidden;
+    position:relative;
+    padding:2rem 1.5rem 2.5rem;
+    box-shadow:
+      inset 0 0 120px rgba(0,0,0,0.6),
+      inset 0 0 50px rgba(119,31,229,0.07),
+      0 0 35px rgba(119,31,229,0.3),
+      0 0 70px rgba(119,31,229,0.1);
+    animation:screen-flicker 12s infinite;
+  }
+
+  @keyframes screen-flicker {
+    0%,88%,90%,92%,100% { opacity:1; }
+    89% { opacity:0.96; }
+    91% { opacity:0.98; }
+  }
+
+  /* Scanlines */
+  #crt-screen::before {
+    content:'';
+    position:absolute;
+    inset:0;
+    background:repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 3px,
+      rgba(0,0,0,0.18) 3px,
+      rgba(0,0,0,0.18) 4px
+    );
+    pointer-events:none;
+    z-index:997;
+  }
+
+  /* Vignette */
+  #crt-screen::after {
+    content:'';
+    position:absolute;
+    inset:0;
+    background:radial-gradient(ellipse at 50% 40%, transparent 50%, rgba(0,0,0,0.7) 100%);
+    pointer-events:none;
+    z-index:996;
+  }
+
+  /* ── Phosphor glow on key text ── */
+  .header h1 {
+    text-shadow:
+      4px 4px 0 #08021a,
+      -2px -2px 0 var(--g1),
+      2px 0 0 var(--red),
+      -2px 0 0 var(--g3),
+      0 0 18px var(--g1),
+      0 0 40px rgba(119,31,229,0.55);
+  }
+  .header .tagline {
+    color:var(--g2);
+    text-shadow:0 0 10px var(--g2), 0 0 20px rgba(191,152,241,0.4);
+  }
+  .panel-title {
+    text-shadow:0 0 8px var(--g2), 0 0 18px rgba(191,152,241,0.35);
+  }
+  .score-bar span {
+    text-shadow:0 0 8px var(--yel), 0 0 16px rgba(255,175,150,0.4);
+  }
+  #remaining span {
+    text-shadow:0 0 8px var(--g1);
+  }
+  #next-btn {
+    text-shadow:0 0 8px rgba(255,255,255,0.6);
+    box-shadow:0 4px 0 #1a6124,4px 0 0 #1e7a2c,0 0 12px rgba(42,157,58,0.5);
+  }
+  .btn.primary {
+    box-shadow:0 4px 0 #8b3010,4px 0 0 #9b3a15,0 0 12px rgba(255,86,33,0.35);
+  }
+
+  /* Keep container full-width inside screen */
+  #container { max-width:100%; }
+</style>
 </head>
 <body>
+<div id="crt-bezel">
+<div id="crt-screen">
 <div class="header">
   <h1>GRAND PRIX</h1>
   <div class="tagline">— PICCO REFERRAL RAFFLE · HORSE RACE —</div>
@@ -210,7 +356,7 @@
     <div id="remaining">REMAINING: <span id="remaining-count">0</span> PLAYERS</div>
     <div id="race-layout">
       <div id="track-wrap">
-        <svg id="track-svg" viewBox="0 0 800 480" style="width:100%;display:block;background:#0a1a0d"></svg>
+        <svg id="track-svg" viewBox="0 0 800 480" style="width:100%;display:block;background:#0d0520"></svg>
         <div id="horses-layer"></div>
       </div>
       <div class="panel" id="standings-side">
@@ -245,6 +391,8 @@
   </div>
 
 </div>
+</div><!-- /crt-screen -->
+</div><!-- /crt-bezel -->
 
 <!-- New Race confirmation modal -->
 <div id="new-race-modal">
@@ -264,7 +412,7 @@
 </div>
 
 <script>
-const COLORS = ['#4ecb71','#e94560','#f5a623','#7ddf96','#80dfff','#ffb347','#ff6eb4','#b2f0c0','#f08080','#c8a2c8','#4ecb71','#e94560','#f5a623','#7ddf96','#80dfff','#ffb347','#ff6eb4','#b2f0c0','#f08080','#c8a2c8'];
+const COLORS = ['#771FE5','#FF5621','#FFAF96','#BF98F1','#80dfff','#E05B31','#ff80c0','#DBBFFF','#f08080','#EDDFFF','#771FE5','#FF5621','#FFAF96','#BF98F1','#80dfff','#E05B31','#ff80c0','#DBBFFF','#f08080','#EDDFFF'];
 const EMOJI_OPTIONS = ['🐴','🦄','🐎','🏇','🐲','🐯','🦊','🐺','🐻','🦁','🐸','🐧','🦅','🐬','🦋','⚡','🔥','💎','🌟','🚀','🎯','🎪','🎠','🎡','🏆','👑','🌈','🍀','🎸','🎺'];
 
 // ── Track Definitions ─────────────────────────────────────
@@ -455,11 +603,11 @@ function buildTrackSelectScreen() {
     card.id = 'tc-' + track.id;
     const vb = `-${PAD} -${PAD} ${track.vw + PAD*2} ${track.vh + PAD*2}`;
     card.innerHTML = `
-      <svg viewBox="${vb}" style="width:100%;display:block;background:#0a1a0d">
-        <path d="${track.d}" stroke="#2d7a3a" stroke-width="88" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="${track.d}" stroke="#0c1a0f" stroke-width="74" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="${track.d}" stroke="#1e3820" stroke-width="68" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="${track.d}" stroke="#0a1a0d" stroke-width="60" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <svg viewBox="${vb}" style="width:100%;display:block;background:#0d0520">
+        <path d="${track.d}" stroke="#4F0A95" stroke-width="88" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="${track.d}" stroke="#0a0315" stroke-width="74" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="${track.d}" stroke="#1a0540" stroke-width="68" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="${track.d}" stroke="#0d0520" stroke-width="60" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="${track.d}" stroke="rgba(255,255,255,0.22)" stroke-width="2" fill="none" stroke-dasharray="18,14"/>
       </svg>
       <div class="track-card-name">${track.name}</div>
@@ -528,11 +676,11 @@ function renderTrackSVG(track) {
   const vb = `-${PAD} -${PAD} ${track.vw + PAD*2} ${track.vh + PAD*2}`;
   svg.setAttribute('viewBox', vb);
   svg.innerHTML = `
-    <rect x="${-PAD}" y="${-PAD}" width="${track.vw + PAD*2}" height="${track.vh + PAD*2}" fill="#0a1a0d"/>
-    <path d="${track.d}" stroke="#4ecb71" stroke-width="88" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="${track.d}" stroke="#0c1a0f" stroke-width="74" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="${track.d}" stroke="#1e3820" stroke-width="68" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="${track.d}" stroke="#0a1a0d" stroke-width="60" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="${-PAD}" y="${-PAD}" width="${track.vw + PAD*2}" height="${track.vh + PAD*2}" fill="#0d0520"/>
+    <path d="${track.d}" stroke="#4F0A95" stroke-width="88" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="${track.d}" stroke="#0a0315" stroke-width="74" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="${track.d}" stroke="#1a0540" stroke-width="68" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="${track.d}" stroke="#0d0520" stroke-width="60" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
     <path d="${track.d}" stroke="rgba(255,255,255,0.32)" stroke-width="2.5" fill="none" stroke-dasharray="18,14"/>
     <path id="racing-line-path" d="${track.d}" stroke="none" fill="none"/>
   `;
@@ -957,7 +1105,7 @@ function closeNewRaceModal() {
 }
 
 function spawnConfetti(winnerEmoji='🏆') {
-  const cols=['#4ecb71','#e94560','#f5a623','#7ddf96','#80dfff','#ff6eb4'];
+  const cols=['#771FE5','#FF5621','#FFAF96','#BF98F1','#80dfff','#E05B31'];
   for(let i=0;i<80;i++){
     const el=document.createElement('div'); el.className='confetti-piece';
     const s=6+Math.random()*8;
