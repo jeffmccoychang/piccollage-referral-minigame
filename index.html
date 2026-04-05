@@ -477,6 +477,7 @@ let remainingPlayers = [];
 let lanes            = [];
 let pos=[], vel=[], phase=[], phaseTimer=[];
 let finished=false, animId=null, winnerIdx=-1, raceStarted=false, roundNum=0;
+let slowMoRafId1=null, slowMoRafId2=null;
 let activePicker=null;
 let currentLeader = -1;
 let selectedTracks = TRACKS.map(t => t.id); // all selected by default
@@ -990,8 +991,9 @@ function activateSlowMo() {
   // point before the transition fires, making the zoom reliable across all races.
   trackWrapEl.style.transition = 'none';
   trackWrapEl.style.transform = 'scale(1)';
-  requestAnimationFrame(() => {
-    requestAnimationFrame(() => {
+  slowMoRafId1 = requestAnimationFrame(() => {
+    slowMoRafId2 = requestAnimationFrame(() => {
+      slowMoRafId1 = null; slowMoRafId2 = null;
       trackWrapEl.style.transition = 'transform 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
       trackWrapEl.style.transform = 'scale(2.2)';
     });
@@ -999,6 +1001,9 @@ function activateSlowMo() {
 }
 
 function deactivateSlowMo() {
+  // Cancel any pending zoom RAFs so they can't fire after the race ends
+  if (slowMoRafId1) { cancelAnimationFrame(slowMoRafId1); slowMoRafId1 = null; }
+  if (slowMoRafId2) { cancelAnimationFrame(slowMoRafId2); slowMoRafId2 = null; }
   const trackWrapEl = document.getElementById('track-wrap');
   if (!trackWrapEl) return;
   trackWrapEl.style.transition = 'transform 0.55s ease-in';
