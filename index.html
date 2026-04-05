@@ -282,13 +282,69 @@
 
   /* Keep container full-width inside screen */
   #container { max-width:100%; }
+
+  /* ── Pixel art crossed flags ── */
+  .cross-flags {
+    display:inline-block;
+    margin:0 0.18em 0 0.05em;
+    vertical-align:0.25em;
+  }
+  /* Only the fabric waves — poles are static */
+  .flag-fabric-l {
+    transform-box:fill-box;
+    transform-origin:100% 50%; /* pivot at right edge = pole attachment */
+    animation:fabric-wave 0.8s ease-in-out infinite alternate;
+  }
+  .flag-fabric-r {
+    transform-box:fill-box;
+    transform-origin:0% 50%; /* pivot at left edge = pole attachment */
+    animation:fabric-wave 0.8s ease-in-out infinite alternate;
+    animation-delay:0.4s;
+  }
+  @keyframes fabric-wave {
+    0%   { transform:skewY(-7deg); }
+    100% { transform:skewY(7deg); }
+  }
 </style>
 </head>
 <body>
 <div id="crt-bezel">
 <div id="crt-screen">
 <div class="header">
-  <h1>GRAND PRIX</h1>
+  <h1>GRAND<svg class="cross-flags" viewBox="0 0 80 58" xmlns="http://www.w3.org/2000/svg" style="height:0.85em;width:auto;overflow:visible;shape-rendering:crispEdges;image-rendering:pixelated">
+    <!-- Left flag: pole static, fabric animated -->
+    <g transform="translate(56,54) rotate(-40)">
+      <rect x="-2" y="-48" width="4" height="48" fill="#8a9bac"/>
+      <rect x="-1" y="-48" width="1" height="48" fill="#c8d8e8"/>
+      <rect x="-2" y="-48" width="4" height="48" fill="none" stroke="#111" stroke-width="1.5"/>
+      <rect x="-3" y="-52" width="6" height="5" fill="#556677" stroke="#111" stroke-width="1"/>
+      <g class="flag-fabric-l">
+        <rect x="-20" y="-48" width="20" height="15" fill="#dcdcdc" stroke="#111" stroke-width="1.5"/>
+        <rect x="-20" y="-48" width="5" height="5" fill="#1a1a1a"/>
+        <rect x="-10" y="-48" width="5" height="5" fill="#1a1a1a"/>
+        <rect x="-15" y="-43" width="5" height="5" fill="#1a1a1a"/>
+        <rect x="-5"  y="-43" width="5" height="5" fill="#1a1a1a"/>
+        <rect x="-20" y="-38" width="5" height="5" fill="#1a1a1a"/>
+        <rect x="-10" y="-38" width="5" height="5" fill="#1a1a1a"/>
+      </g>
+    </g>
+    <!-- Right flag: pole static, fabric animated -->
+    <g transform="translate(24,54) rotate(40)">
+      <rect x="-2" y="-48" width="4" height="48" fill="#8a9bac"/>
+      <rect x="-1" y="-48" width="1" height="48" fill="#c8d8e8"/>
+      <rect x="-2" y="-48" width="4" height="48" fill="none" stroke="#111" stroke-width="1.5"/>
+      <rect x="-3" y="-52" width="6" height="5" fill="#556677" stroke="#111" stroke-width="1"/>
+      <g class="flag-fabric-r">
+        <rect x="0"  y="-48" width="20" height="15" fill="#dcdcdc" stroke="#111" stroke-width="1.5"/>
+        <rect x="5"  y="-48" width="5" height="5" fill="#1a1a1a"/>
+        <rect x="15" y="-48" width="5" height="5" fill="#1a1a1a"/>
+        <rect x="0"  y="-43" width="5" height="5" fill="#1a1a1a"/>
+        <rect x="10" y="-43" width="5" height="5" fill="#1a1a1a"/>
+        <rect x="5"  y="-38" width="5" height="5" fill="#1a1a1a"/>
+        <rect x="15" y="-38" width="5" height="5" fill="#1a1a1a"/>
+      </g>
+    </g>
+  </svg>PRIX</h1>
   <div class="tagline">— PICCO REFERRAL RAFFLE · HORSE RACE —</div>
 </div>
 <div id="container">
