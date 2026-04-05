@@ -141,6 +141,13 @@
   #new-race-modal-box .modal-body { font-size:8px; line-height:1.9; color:var(--white); letter-spacing:1px; margin-bottom:20px; }
   #new-race-modal-box .modal-body span { color:var(--g1); }
   #new-race-modal-box .modal-actions { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+  #no-track-modal { display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.75); align-items:center; justify-content:center; }
+  #no-track-modal.open { display:flex; }
+  #no-track-modal-box { background:var(--bg2); border:3px solid var(--panel); outline:2px solid var(--yel); outline-offset:-5px; padding:2rem 1.8rem; max-width:340px; width:90%; text-align:center; }
+  #no-track-modal-box .modal-icon { font-size:36px; display:block; margin-bottom:14px; }
+  #no-track-modal-box .modal-title { font-size:10px; letter-spacing:3px; color:var(--yel); margin-bottom:14px; }
+  #no-track-modal-box .modal-body { font-size:8px; line-height:1.9; color:var(--white); letter-spacing:1px; margin-bottom:20px; }
+  #no-track-modal-box .modal-actions { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
 </style>
 
 <style>
@@ -454,6 +461,20 @@
 </div><!-- /crt-screen -->
 </div><!-- /crt-bezel -->
 
+<!-- No track selected modal -->
+<div id="no-track-modal">
+  <div id="no-track-modal-box">
+    <span class="modal-icon">🏁</span>
+    <div class="modal-title">NO TRACK SELECTED!</div>
+    <div class="modal-body">
+      Tap on at least one track before starting the race.
+    </div>
+    <div class="modal-actions">
+      <button class="btn primary" onclick="closeNoTrackModal()">GOT IT</button>
+    </div>
+  </div>
+</div>
+
 <!-- New Race confirmation modal -->
 <div id="new-race-modal">
   <div id="new-race-modal-box">
@@ -696,7 +717,7 @@ function toggleTrack(track) {
 function toggleSelectAllTracks() {
   SFX.click();
   if (selectedTracks.length === TRACKS.length) {
-    selectedTracks = [TRACKS[0].id]; // deselect all but first
+    selectedTracks = [];
   } else {
     selectedTracks = TRACKS.map(t => t.id);
   }
@@ -713,8 +734,16 @@ function updateSelectAllBtn() {
   btn.textContent = selectedTracks.length === TRACKS.length ? 'DESELECT ALL' : 'SELECT ALL';
 }
 
+function closeNoTrackModal() {
+  document.getElementById('no-track-modal').classList.remove('open');
+}
+
 function startFromTrackSelect() {
   const pool = TRACKS.filter(t => selectedTracks.includes(t.id));
+  if (pool.length === 0) {
+    document.getElementById('no-track-modal').classList.add('open');
+    return;
+  }
   selectedTrack = pool[Math.floor(Math.random() * pool.length)];
   buildRound();
   showScreen('race');
