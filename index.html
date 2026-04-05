@@ -147,12 +147,15 @@
 
   /* Dark room backdrop */
   body {
-    background:#06030f;
+    background-color:#06030f;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 79px, rgba(119,31,229,0.12) 79px, rgba(119,31,229,0.12) 82px),
+      repeating-linear-gradient(90deg, transparent, transparent 79px, rgba(119,31,229,0.12) 79px, rgba(119,31,229,0.12) 82px);
     padding:3rem 1rem 4rem;
     justify-content:center;
     align-items:center;
   }
-  /* Kill old body scanlines — replaced by #crt-screen::before */
+/* Kill old body scanlines — replaced by #crt-screen::before */
   body::after { display:none; }
 
   /* ── Bezel ── */
