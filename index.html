@@ -1424,7 +1424,7 @@ const SFX = (() => {
   let _ready=false;
   function _boot(){
     if(_ready)return;_ready=true;
-    if(_init())_startBG();
+    _init(); // init AudioContext for SFX only; BGM handled by YouTube
     document.removeEventListener('click',_boot,true);
     document.removeEventListener('touchstart',_boot,true);
   }
@@ -1476,9 +1476,12 @@ document.addEventListener('focusin',e=>{
 });
 
 // ── YouTube BGM ────────────────────────────────────────────────────────────
+const DEFAULT_YT_ID = 'FTRnTAyiFjg';
+
 let _ytPlayer = null;
 let _ytReady = false;
-let _ytMode = false;
+let _ytMode = false;       // true = youtube is active bgm
+let _ytIsDefault = false;  // true = currently playing the default video
 
 function _ytExtractId(url) {
   const patterns = [
@@ -1511,59 +1514,89 @@ function _ytLoadAPI(cb) {
   }
 }
 
+function _ytStartVideo(id, isDefault) {
+  const vol = parseInt(document.getElementById('bgm-vol').value);
+  SFX.stopChiptune();
+
+  const onReady = (e) => {
+    _ytReady = true;
+    e.target.setVolume(vol);
+    e.target.playVideo();
+    _ytMode = true;
+    _ytIsDefault = isDefault;
+    if (!isDefault) {
+      _ytSetStatus('');
+      document.getElementById('yt-revert-btn').style.display = 'inline-block';
+    }
+  };
+  const onError = (e) => {
+    const msgs = {2:'Invalid video ID.',5:'HTML5 error.',100:'Video not found.',101:'Embedding disabled for this video.',150:'Embedding disabled for this video.'};
+    if (isDefault) {
+      // Default video failed — fall back silently to chiptune
+      _ytMode = false;
+      _ytIsDefault = false;
+      SFX.startChiptune();
+    } else {
+      _ytSetStatus(msgs[e.data] || 'Playback error.', true);
+      // Reload default instead of chiptune
+      _ytIsDefault = false;
+      _ytMode = false;
+      document.getElementById('yt-revert-btn').style.display = 'none';
+      document.getElementById('yt-url').value = '';
+      _ytStartVideo(DEFAULT_YT_ID, true);
+    }
+  };
+  const onStateChange = (e) => {
+    if (e.data === 0) e.target.playVideo(); // loop on end (fallback)
+  };
+
+  if (_ytPlayer && _ytReady) {
+    _ytPlayer.loadVideoById({ videoId: id, suggestedQuality: 'small' });
+    _ytPlayer.setVolume(vol);
+    _ytMode = true;
+    _ytIsDefault = isDefault;
+    if (!isDefault) {
+      _ytSetStatus('');
+      document.getElementById('yt-revert-btn').style.display = 'inline-block';
+    }
+  } else {
+    _ytPlayer = new YT.Player('yt-player', {
+      height: '1', width: '1',
+      videoId: id,
+      playerVars: { autoplay: 1, loop: 1, playlist: id, controls: 0, disablekb: 1 },
+      events: { onReady, onError, onStateChange }
+    });
+  }
+}
+
+// Called once on first user interaction
+(function _ytBootstrap() {
+  let _booted = false;
+  function _boot() {
+    if (_booted) return;
+    _booted = true;
+    document.removeEventListener('click', _boot, true);
+    document.removeEventListener('touchstart', _boot, true);
+    _ytLoadAPI(() => _ytStartVideo(DEFAULT_YT_ID, true));
+  }
+  document.addEventListener('click', _boot, true);
+  document.addEventListener('touchstart', _boot, true);
+})();
+
 function ytPlay() {
   const url = document.getElementById('yt-url').value.trim();
   if (!url) { _ytSetStatus('Paste a YouTube link first.', true); return; }
   const id = _ytExtractId(url);
   if (!id) { _ytSetStatus('Could not find a video ID in that link.', true); return; }
-
   _ytSetStatus('Loading\u2026');
-  const vol = parseInt(document.getElementById('bgm-vol').value);
-
-  _ytLoadAPI(() => {
-    SFX.stopChiptune();
-
-    const onReady = (e) => {
-      _ytReady = true;
-      e.target.setVolume(vol);
-      e.target.playVideo();
-      _ytMode = true;
-      _ytSetStatus('');
-      document.getElementById('yt-revert-btn').style.display = 'inline-block';
-    };
-    const onError = (e) => {
-      const msgs = {2:'Invalid video ID.',5:'HTML5 error.',100:'Video not found.',101:'Embedding disabled for this video.',150:'Embedding disabled for this video.'};
-      _ytSetStatus(msgs[e.data] || 'Playback error.', true);
-      ytRevert();
-    };
-    const onStateChange = (e) => {
-      if (e.data === 0) e.target.playVideo(); // loop on end (fallback)
-    };
-
-    if (_ytPlayer && _ytReady) {
-      _ytPlayer.loadVideoById(id);
-      _ytPlayer.setVolume(vol);
-      _ytMode = true;
-      _ytSetStatus('');
-      document.getElementById('yt-revert-btn').style.display = 'inline-block';
-    } else {
-      _ytPlayer = new YT.Player('yt-player', {
-        height: '1', width: '1',
-        videoId: id,
-        playerVars: { autoplay: 1, loop: 1, playlist: id, controls: 0, disablekb: 1 },
-        events: { onReady, onError, onStateChange }
-      });
-    }
-  });
+  _ytLoadAPI(() => _ytStartVideo(id, false));
 }
 
 function ytRevert() {
-  if (_ytPlayer && _ytReady) _ytPlayer.stopVideo();
-  _ytMode = false;
   _ytSetStatus('');
   document.getElementById('yt-revert-btn').style.display = 'none';
   document.getElementById('yt-url').value = '';
-  SFX.startChiptune();
+  _ytLoadAPI(() => _ytStartVideo(DEFAULT_YT_ID, true));
 }
 
 // Extend setBGVol to also control YT volume when active
