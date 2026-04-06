@@ -115,6 +115,7 @@
   #speed-wrap { display:flex; align-items:center; gap:8px; font-size:8px; letter-spacing:1px; color:var(--dim); margin-left:auto; }
   input[type=range] { accent-color:var(--g2); cursor:pointer; width:80px; }
   .confetti-piece { position:fixed; pointer-events:none; animation:fall linear forwards; }
+  #finish-overlay { position:fixed; inset:0; background:#000; opacity:0; pointer-events:none; z-index:9999; transition:opacity 0.35s ease; }
   @keyframes fall { to{transform:translateY(100vh) rotate(720deg);opacity:0} }
   @keyframes gallop-bounce {
     0%   { transform: translateY(0px) rotate(-1deg); }
@@ -453,7 +454,7 @@
         <div id="standings"></div>
       </div>
     </div>
-    <div class="panel" style="padding:1rem 1.25rem;position:relative;z-index:998">
+    <div id="controls-panel" class="panel" style="padding:1rem 1.25rem;position:relative;z-index:998">
       <div id="controls">
         <button class="btn primary" id="race-btn" onclick="startRace()">START RACE &gt;</button>
         <button class="btn go" onclick="resetRace()">NEW RACE</button>
@@ -482,6 +483,8 @@
 </div>
 </div><!-- /crt-screen -->
 </div><!-- /crt-bezel -->
+
+<div id="finish-overlay"></div>
 
 <!-- No track selected modal -->
 <div id="no-track-modal">
@@ -567,7 +570,7 @@ const TRACKS = [
     // Flat bottom + L-line valley corners (rounded by stroke-linejoin) + cubic bezier bumps.
     // L at valley points creates sharp angles → stroke rounds them into visible dips.
     // Start at bottom-center for a vertical finish line.
-    d: 'M 400,388 L 605,388 C 648,388 652,362 648,325 C 646,255 596,178 546,162 L 484,235 C 466,228 444,122 400,118 C 356,122 334,228 316,235 L 254,162 C 204,178 154,255 152,325 C 148,362 152,388 195,388 Z',
+    d: 'M 400,415 L 646,415 C 698,415 702,384 698,339 C 695,255 635,163 575,144 L 501,231 C 479,223 453,96 400,91 C 347,96 321,223 299,231 L 225,144 C 165,163 105,255 103,339 C 98,384 102,415 154,415 Z',
     vw: 800, vh: 480
   }
 ];
@@ -1093,6 +1096,8 @@ function activateSlowMo() {
   if (standingsSide) standingsSide.style.visibility = 'hidden';
   const controls = document.getElementById('controls');
   if (controls) controls.style.visibility = 'hidden';
+  const controlsPanel = document.getElementById('controls-panel');
+  if (controlsPanel) controlsPanel.style.visibility = 'hidden';
 
   // Compute finish line position as % within track-wrap
   const vbW = selectedTrack.vw + PAD * 2;
@@ -1114,6 +1119,7 @@ function activateSlowMo() {
       trackWrapEl.style.transform = 'scale(2.2)';
     });
   });
+
 }
 
 function deactivateSlowMo() {
@@ -1130,23 +1136,35 @@ function deactivateSlowMo() {
   if (standingsSide) standingsSide.style.visibility = '';
   const controls = document.getElementById('controls');
   if (controls) controls.style.visibility = '';
+  const controlsPanel = document.getElementById('controls-panel');
+  if (controlsPanel) controlsPanel.style.visibility = '';
 }
 
 function captureFinishSnapshot(callback) {
   const trackWrapEl = document.getElementById('track-wrap');
   const path = document.getElementById('racing-line-path');
+  const overlay = document.getElementById('finish-overlay');
 
-  // Always show the frame (name caption needs to appear even without a screenshot)
+  function revealWinner() {
+    callback(); // show winner screen with snapshot already populated
+    // Fade overlay back out so winner screen appears cleanly
+    requestAnimationFrame(() => {
+      if (overlay) overlay.style.opacity = '0';
+    });
+  }
+
   function showFrame() {
     const wrap = document.getElementById('finish-snapshot-wrap');
     if (wrap) wrap.style.display = 'block';
   }
 
+  // Fade to black — this covers the html2canvas capture delay
+  if (overlay) overlay.style.opacity = '1';
+
   if (!trackWrapEl || !path || typeof html2canvas === 'undefined') {
-    showFrame(); callback(); return;
+    showFrame(); revealWinner(); return;
   }
 
-  // Compute finish-line pixel coords within the track-wrap element
   const vbW = selectedTrack.vw + PAD * 2;
   const vbH = selectedTrack.vh + PAD * 2;
   const pt  = path.getPointAtLength(0);
@@ -1155,30 +1173,26 @@ function captureFinishSnapshot(callback) {
   const fx  = (pt.x + PAD) / vbW * wrW;
   const fy  = (pt.y + PAD) / vbH * wrH;
 
-  const fallback = setTimeout(() => { showFrame(); callback(); }, 3000);
+  const fallback = setTimeout(() => { showFrame(); revealWinner(); }, 3000);
 
-  html2canvas(trackWrapEl, { scale: window.devicePixelRatio || 1, logging: false, useCORS: true })
+  html2canvas(trackWrapEl, { scale: 1, logging: false, useCORS: true, imageTimeout: 0 })
     .then(canvas => {
       clearTimeout(fallback);
 
-      // Crop a window around the finish line
-      const dpr   = window.devicePixelRatio || 1;
-      const cropW = Math.round(wrW * dpr * 0.55);  // ~55% of track width
-      const cropH = Math.round(cropW * 0.62);       // 16:10-ish aspect
-      const cx    = Math.max(0, Math.min(Math.round(fx * dpr - cropW / 2), canvas.width  - cropW));
-      const cy    = Math.max(0, Math.min(Math.round(fy * dpr - cropH / 2), canvas.height - cropH));
-
+      const cropW = Math.round(wrW * 0.55);
+      const cropH = Math.round(cropW * 0.62);
+      const cx    = Math.max(0, Math.min(Math.round(fx - cropW / 2), canvas.width  - cropW));
+      const cy    = Math.max(0, Math.min(Math.round(fy - cropH / 2), canvas.height - cropH));
       const out = document.createElement('canvas');
       out.width  = cropW;
       out.height = cropH;
       out.getContext('2d').drawImage(canvas, cx, cy, cropW, cropH, 0, 0, cropW, cropH);
-
       const img = document.getElementById('finish-snapshot-img');
       if (img) img.src = out.toDataURL('image/png');
       showFrame();
-      callback();
+      revealWinner();
     })
-    .catch(() => { clearTimeout(fallback); showFrame(); callback(); });
+    .catch(() => { clearTimeout(fallback); showFrame(); revealWinner(); });
 }
 
 function declareWinner(winnerName) {
