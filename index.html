@@ -55,26 +55,29 @@
   #next-btn:hover { background:#38c44d; }
   .btn:disabled { opacity:0.35; cursor:default; transform:none; }
 
-  /* Setup */
-  .setup-table { width:100%; border-collapse:collapse; margin-bottom:12px; }
-  .setup-table th { font-size:7px; color:var(--dim); letter-spacing:2px; text-align:left; padding:0 6px 10px; }
-  .setup-table th.center { text-align:center; }
-  .setup-table td { padding:4px 6px; vertical-align:middle; }
-  .setup-table tr:not(:last-child) td { border-bottom:1px solid var(--panel); }
-  .emoji-btn { font-size:18px; background:var(--bg); border:2px solid var(--dim); padding:4px 8px; cursor:pointer; line-height:1; min-width:42px; text-align:center; }
-  .emoji-btn:hover { border-color:var(--g2); }
-  .name-input { width:100%; font-size:10px; padding:7px 10px; border:2px solid var(--dim); background:var(--bg); color:var(--white); font-family:var(--px); outline:none; }
-  .name-input:focus { border-color:var(--g2); }
-  .entries-wrap { display:flex; align-items:center; gap:6px; justify-content:center; }
-  .entries-btn { font-size:12px; background:var(--bg); border:2px solid var(--dim); color:var(--white); cursor:pointer; width:26px; height:26px; display:flex; align-items:center; justify-content:center; font-family:var(--px); flex-shrink:0; }
-  .entries-btn:hover { border-color:var(--g2); }
-  .entries-input { font-size:10px; color:var(--white); width:28px; text-align:center; background:var(--bg); border:2px solid var(--dim); font-family:var(--px); outline:none; padding:3px 0; }
-  .entries-input:focus { border-color:var(--g2); }
-  .remove-btn { font-size:9px; font-family:var(--px); background:none; border:2px solid var(--dim); color:var(--dim); cursor:pointer; padding:5px 8px; }
+  /* Setup — card grid */
+  .player-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:14px; }
+  @media (max-width:700px) { .player-grid { grid-template-columns:repeat(3,1fr); } }
+  .player-card { background:linear-gradient(180deg,#0f0328 0%,#07011a 100%); border:3px solid var(--dim); position:relative; display:flex; flex-direction:column; align-items:center; padding:10px 8px 12px; gap:6px; transition:border-color 0.15s, box-shadow 0.15s; }
+  .player-card:hover { border-color:var(--g2); box-shadow:0 0 12px rgba(191,152,241,0.25), inset 0 0 20px rgba(119,31,229,0.08); }
+  .player-card:hover .remove-btn { opacity:1; }
+  .player-num { position:absolute; top:5px; left:7px; font-size:6px; color:var(--dim); letter-spacing:1px; }
+  .remove-btn { position:absolute; top:4px; right:4px; opacity:0; transition:opacity 0.12s; font-size:7px; padding:2px 5px; background:none; border:1px solid var(--dim); color:var(--dim); cursor:pointer; font-family:var(--px); line-height:1.4; }
   .remove-btn:hover { border-color:var(--red); color:var(--red); }
+  .emoji-btn { font-size:48px; background:none; border:none; cursor:pointer; line-height:1; padding:4px 4px 0; text-align:center; margin-top:12px; display:block; transition:transform 0.1s; }
+  .emoji-btn:hover { transform:scale(1.15); }
+  .name-input { width:100%; font-size:7px; padding:5px 4px; border:2px solid var(--dim); background:var(--bg2); color:var(--white); font-family:var(--px); outline:none; text-align:center; }
+  .name-input:focus { border-color:var(--g2); }
+  .entries-section { width:100%; display:flex; flex-direction:column; align-items:center; gap:4px; }
+  .entries-label { font-size:5px; color:var(--dim); letter-spacing:2px; }
+  .entries-wrap { display:flex; align-items:center; gap:4px; justify-content:center; }
+  .entries-btn { font-size:10px; background:var(--bg); border:2px solid var(--dim); color:var(--white); cursor:pointer; width:22px; height:22px; display:flex; align-items:center; justify-content:center; font-family:var(--px); flex-shrink:0; }
+  .entries-btn:hover { border-color:var(--g2); }
+  .entries-input { font-size:8px; color:var(--white); width:24px; text-align:center; background:var(--bg); border:2px solid var(--dim); font-family:var(--px); outline:none; padding:2px 0; }
+  .entries-input:focus { border-color:var(--g2); }
   .setup-actions { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; margin-top:4px; }
-  .emoji-picker span { font-size:20px; cursor:pointer; padding:4px; }
-  .emoji-picker span:hover { background:var(--panel); }
+  .emoji-picker-float span { font-size:22px; cursor:pointer; padding:3px; }
+  .emoji-picker-float span:hover { background:var(--panel); }
 
   /* Track Select */
   .track-cards { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
@@ -407,17 +410,7 @@
   <div id="setup-screen">
     <div class="panel">
       <div class="panel-title">&gt; ENTER PARTICIPANTS</div>
-      <table class="setup-table">
-        <thead>
-          <tr>
-            <th style="width:50px">EMOJI</th>
-            <th>NAME</th>
-            <th class="center" style="width:110px">ENTRIES</th>
-            <th style="width:36px"></th>
-          </tr>
-        </thead>
-        <tbody id="player-rows"></tbody>
-      </table>
+      <div class="player-grid" id="player-rows"></div>
       <div class="setup-actions">
         <button class="btn go" onclick="addPlayerRow()">+ ADD PLAYER</button>
         <button class="btn primary" onclick="startSetup()">START RACE &gt;</button>
@@ -612,13 +605,10 @@ function togglePicker(btn, e) {
   e.stopPropagation();
   if (activePicker && activePicker.btn === btn) { closePicker(); return; }
   closePicker();
-  const tr = btn.closest('tr');
-  const pickerTr = document.createElement('tr');
-  const pickerTd = document.createElement('td');
-  pickerTd.colSpan = 4;
-  pickerTd.style.cssText = 'padding:4px 6px 8px;';
-  const grid = document.createElement('div');
-  grid.style.cssText = 'display:flex;flex-wrap:wrap;gap:4px;background:var(--bg);border:2px solid var(--g1);padding:8px;';
+  const rect = btn.getBoundingClientRect();
+  const picker = document.createElement('div');
+  picker.className = 'emoji-picker-float';
+  picker.style.cssText = `position:fixed;left:${Math.min(rect.left, window.innerWidth-232)}px;top:${rect.bottom+4}px;z-index:500;display:flex;flex-wrap:wrap;gap:4px;background:var(--bg);border:2px solid var(--g1);padding:8px;width:224px;`;
   EMOJI_OPTIONS.forEach(em => {
     const sp = document.createElement('span');
     sp.textContent = em;
@@ -626,53 +616,85 @@ function togglePicker(btn, e) {
     sp.onmouseover = () => sp.style.background = 'var(--panel)';
     sp.onmouseout  = () => sp.style.background = '';
     sp.onclick = ev => { ev.stopPropagation(); SFX.click(); btn.textContent = em; closePicker(); };
-    grid.appendChild(sp);
+    picker.appendChild(sp);
   });
-  pickerTd.appendChild(grid);
-  pickerTr.appendChild(pickerTd);
-  tr.after(pickerTr);
-  activePicker = { btn, pickerTr };
+  document.body.appendChild(picker);
+  activePicker = { btn, pickerEl: picker };
 }
 
 function closePicker() {
-  if (activePicker) { activePicker.pickerTr.remove(); activePicker = null; }
+  if (activePicker) { activePicker.pickerEl.remove(); activePicker = null; }
 }
 document.addEventListener('click', closePicker);
 
 function getUsedEmojis() { return [...document.querySelectorAll('.emoji-btn')].map(b=>b.textContent); }
 function nextUnusedEmoji() { const used=getUsedEmojis(); return EMOJI_OPTIONS.find(e=>!used.includes(e))||EMOJI_OPTIONS[0]; }
-function cycleEmoji(row, dir) {
-  const btn=row.querySelector('.emoji-btn');
+function cycleEmoji(card, dir) {
+  const btn=card.querySelector('.emoji-btn');
   const cur=EMOJI_OPTIONS.indexOf(btn.textContent);
   btn.textContent=EMOJI_OPTIONS[(cur+dir+EMOJI_OPTIONS.length)%EMOJI_OPTIONS.length];
 }
 
 // ── Setup rows ────────────────────────────────────────────
+function renumberCards() {
+  [...document.querySelectorAll('#player-rows .player-card')].forEach((card,i)=>{
+    card.querySelector('.player-num').textContent='P'+(i+1);
+    card.querySelector('.name-input').placeholder='Player '+(i+1);
+  });
+}
+
 function addPlayerRow(name='', emoji=null, entries=1) {
-  const tbody=document.getElementById('player-rows');
-  const idx=tbody.children.length;
+  const grid=document.getElementById('player-rows');
+  const idx=grid.children.length;
   const em=emoji||nextUnusedEmoji();
-  const tr=document.createElement('tr');
 
-  const tdE=document.createElement('td');
-  const emojiBtn=document.createElement('button'); emojiBtn.className='emoji-btn'; emojiBtn.textContent=em;
-  emojiBtn.onclick=e=>togglePicker(emojiBtn,e); tdE.appendChild(emojiBtn);
+  const card=document.createElement('div');
+  card.className='player-card';
 
-  const tdN=document.createElement('td');
-  const input=document.createElement('input'); input.type='text'; input.className='name-input';
+  // P# badge (top-left)
+  const numBadge=document.createElement('span');
+  numBadge.className='player-num';
+  numBadge.textContent='P'+(idx+1);
+  card.appendChild(numBadge);
+
+  // Remove button (top-right, visible on hover only)
+  const removeBtn=document.createElement('button');
+  removeBtn.className='remove-btn';
+  removeBtn.textContent='✕';
+  removeBtn.onclick=()=>{
+    if(document.getElementById('player-rows').children.length<=2){alert('Minimum 2 players required.');return;}
+    card.remove();closePicker();renumberCards();
+  };
+  card.appendChild(removeBtn);
+
+  // Large emoji button
+  const emojiBtn=document.createElement('button');
+  emojiBtn.className='emoji-btn';
+  emojiBtn.textContent=em;
+  emojiBtn.onclick=e=>togglePicker(emojiBtn,e);
+  card.appendChild(emojiBtn);
+
+  // Name input
+  const input=document.createElement('input');
+  input.type='text'; input.className='name-input';
   input.placeholder='Player '+(idx+1); input.value=name; input.maxLength=20;
   input.addEventListener('keydown', e=>{
     const all=[...document.querySelectorAll('.name-input')], i=all.indexOf(input);
     if(e.key==='ArrowDown'){e.preventDefault();if(i<all.length-1)all[i+1].focus();else{addPlayerRow();setTimeout(()=>{const u=[...document.querySelectorAll('.name-input')];u[u.length-1].focus();},0);}}
     if(e.key==='ArrowUp'){e.preventDefault();if(i>0)all[i-1].focus();}
-    if(e.key==='ArrowLeft'&&input.selectionStart===0){e.preventDefault();cycleEmoji(tr,-1);}
-    if(e.key==='ArrowRight'&&input.selectionStart===input.value.length){e.preventDefault();cycleEmoji(tr,1);}
-    if(e.key==='Backspace'&&input.value===''){e.preventDefault();if(document.getElementById('player-rows').children.length<=2)return;const prev=i>0?all[i-1]:all[1];tr.remove();closePicker();if(prev)prev.focus();}
+    if(e.key==='ArrowLeft'&&input.selectionStart===0){e.preventDefault();if(i>0)all[i-1].focus();}
+    if(e.key==='ArrowRight'&&input.selectionStart===input.value.length){e.preventDefault();if(i<all.length-1)all[i+1].focus();}
+    if(e.key==='Backspace'&&input.value===''){e.preventDefault();if(document.getElementById('player-rows').children.length<=2)return;const prev=i>0?all[i-1]:all[1];card.remove();closePicker();renumberCards();if(prev)prev.focus();}
     if(e.key==='Enter'){e.preventDefault();if(i<all.length-1)all[i+1].focus();else startSetup();}
   });
-  tdN.appendChild(input);
+  card.appendChild(input);
 
-  const tdEn=document.createElement('td');
+  // Entries section
+  const entriesSection=document.createElement('div');
+  entriesSection.className='entries-section';
+  const entriesLabel=document.createElement('div');
+  entriesLabel.className='entries-label';
+  entriesLabel.textContent='ENTRIES';
   const wrap=document.createElement('div'); wrap.className='entries-wrap';
   const minus=document.createElement('button'); minus.className='entries-btn'; minus.textContent='−';
   const valIn=document.createElement('input'); valIn.type='text'; valIn.className='entries-input'; valIn.value=entries; valIn.maxLength=2;
@@ -681,22 +703,18 @@ function addPlayerRow(name='', emoji=null, entries=1) {
   const plus=document.createElement('button'); plus.className='entries-btn'; plus.textContent='+';
   minus.onclick=()=>{const v=parseInt(valIn.value)||1;if(v>1)valIn.value=v-1;};
   plus.onclick=()=>{const v=parseInt(valIn.value)||1;if(v<20)valIn.value=v+1;};
-  wrap.appendChild(minus); wrap.appendChild(valIn); wrap.appendChild(plus); tdEn.appendChild(wrap);
+  wrap.appendChild(minus); wrap.appendChild(valIn); wrap.appendChild(plus);
+  entriesSection.appendChild(entriesLabel); entriesSection.appendChild(wrap);
+  card.appendChild(entriesSection);
 
-  const tdR=document.createElement('td');
-  const removeBtn=document.createElement('button'); removeBtn.className='remove-btn'; removeBtn.textContent='✕';
-  removeBtn.onclick=()=>{if(document.getElementById('player-rows').children.length<=2){alert('Minimum 2 players required.');return;}tr.remove();closePicker();};
-  tdR.appendChild(removeBtn);
-
-  tr.appendChild(tdE); tr.appendChild(tdN); tr.appendChild(tdEn); tr.appendChild(tdR);
-  tbody.appendChild(tr);
+  grid.appendChild(card);
 }
 
 function getPlayersFromForm() {
-  return [...document.querySelectorAll('#player-rows tr')].map(row=>({
-    name:  row.querySelector('.name-input').value.trim(),
-    emoji: row.querySelector('.emoji-btn').textContent,
-    entries: parseInt(row.querySelector('.entries-input').value)||1
+  return [...document.querySelectorAll('#player-rows .player-card')].map(card=>({
+    name:  card.querySelector('.name-input').value.trim(),
+    emoji: card.querySelector('.emoji-btn').textContent,
+    entries: parseInt(card.querySelector('.entries-input').value)||1
   })).filter(p=>p.name);
 }
 
@@ -1229,9 +1247,14 @@ function confirmResetRace() {
   if(animId) cancelAnimationFrame(animId);
   cleanupRaceEffects();
   finished=false; raceStarted=false; winnerIdx=-1; roundNum=0;
+  const savedPlayers=originalPlayers.slice();
   originalPlayers=[]; remainingPlayers=[]; lanes=[];
   document.getElementById('player-rows').innerHTML='';
-  for (let i=0; i<3; i++) addPlayerRow();
+  if(savedPlayers.length>0){
+    savedPlayers.forEach(p=>addPlayerRow(p.name,p.emoji,p.entries));
+  } else {
+    for(let i=0;i<5;i++) addPlayerRow();
+  }
   showScreen('setup');
 }
 
@@ -1255,7 +1278,7 @@ function spawnConfetti(winnerEmoji='🏆') {
     document.body.appendChild(el); setTimeout(()=>el.remove(),6000);
   }
 }
-addPlayerRow(); addPlayerRow(); addPlayerRow();
+addPlayerRow(); addPlayerRow(); addPlayerRow(); addPlayerRow(); addPlayerRow();
 
 // ── Audio Engine (Web Audio API — no external files) ──────────────────────
 const SFX = (() => {
