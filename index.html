@@ -24,7 +24,7 @@
   @keyframes blink { 50%{opacity:0} }
   .score-bar { display:flex; justify-content:space-between; align-items:center; font-size:8px; border:2px solid var(--panel); background:var(--bg2); padding:8px 14px; margin-bottom:1.2rem; letter-spacing:1px; position:relative; }
   .score-bar span { color:var(--yel); }
-  #audio-panel { display:none; position:absolute; right:0; top:calc(100% + 6px); z-index:999; background:var(--bg2); border:2px solid var(--g1); outline:1px solid var(--dim); outline-offset:-3px; padding:12px 14px; min-width:250px; }
+  #audio-panel { display:none; position:absolute; right:0; top:calc(100% + 6px); z-index:999; background:var(--bg2); border:2px solid var(--g1); outline:1px solid var(--dim); outline-offset:-3px; padding:12px 14px; min-width:280px; }
   .ap-row { display:flex; align-items:center; gap:10px; }
   .ap-row:first-child { padding-bottom:10px; border-bottom:1px solid var(--panel); margin-bottom:10px; }
   .ap-lbl { font-size:7px; letter-spacing:2px; color:var(--dim); width:28px; }
@@ -32,6 +32,16 @@
   .ap-val { font-size:7px; color:var(--yel); letter-spacing:1px; width:28px; text-align:right; }
   #audio-panel input[type=range] { accent-color:var(--g2); cursor:pointer; flex:1; }
   #audio-panel input[type=range]:disabled { opacity:0.3; cursor:default; }
+  #yt-row { margin-top:10px; padding-top:10px; border-top:1px solid var(--panel); flex-direction:column; align-items:stretch; gap:6px; }
+  #yt-row-inner { display:flex; gap:6px; }
+  #yt-url { flex:1; background:var(--bg); border:1px solid var(--dim); color:var(--white); font-family:var(--px); font-size:7px; padding:5px 7px; outline:none; letter-spacing:1px; }
+  #yt-url::placeholder { color:#555; }
+  #yt-play-btn,#yt-revert-btn { font-size:7px; letter-spacing:1px; padding:5px 8px; cursor:pointer; font-family:var(--px); border:none; text-transform:uppercase; }
+  #yt-play-btn { background:var(--g1); color:#fff; }
+  #yt-play-btn:hover { background:var(--g2); color:var(--bg); }
+  #yt-revert-btn { background:var(--panel); color:var(--white); display:none; }
+  #yt-revert-btn:hover { background:var(--dim); }
+  #yt-status { font-size:6px; letter-spacing:1px; color:var(--yel); min-height:10px; }
   .panel { background:var(--bg2); border:3px solid var(--panel); outline:2px solid var(--g1); outline-offset:-5px; padding:1.4rem; margin-bottom:1.2rem; }
   .panel-title { font-size:9px; letter-spacing:2px; color:var(--g2); margin-bottom:14px; }
   .btn { padding:10px 18px; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; border:0; outline:none; background:var(--panel); color:var(--white); cursor:pointer; font-family:var(--px); box-shadow:0 4px 0 #200540,4px 0 0 #2a0655; transition:all 0.08s; }
@@ -39,7 +49,7 @@
   .btn:active { transform:translate(2px,3px); box-shadow:none; }
   .btn.primary { background:var(--red); color:#fff; box-shadow:0 4px 0 #8b3010,4px 0 0 #9b3a15; }
   .btn.primary:hover { background:#ff7a4a; }
-  .btn.go { background:var(--panel); color:var(--g1); box-shadow:0 4px 0 #0a0520,4px 0 0 #120528; }
+  .btn.go { background:var(--panel); color:var(--white); box-shadow:0 4px 0 #0a0520,4px 0 0 #120528; }
   .btn.go:hover { background:var(--dim); }
   #next-btn { background:#2a9d3a; color:#fff; box-shadow:0 4px 0 #1a6124,4px 0 0 #1e7a2c; }
   #next-btn:hover { background:#38c44d; }
@@ -361,7 +371,7 @@
 </div>
 <div id="container">
   <div class="score-bar">
-    <div>1UP &nbsp;<span id="round-count">00</span></div>
+    <div>RACES &nbsp;<span id="round-count">00</span></div>
     <div>PLAYERS &nbsp;<span id="player-count">00</span></div>
     <div>CREDIT &nbsp;<span>01</span></div>
     <button id="mute-btn" onclick="toggleAudioPanel(event)" style="background:none;border:none;cursor:pointer;font-size:12px;padding:0;color:var(--yel);font-family:var(--px);">🔊</button>
@@ -378,7 +388,18 @@
         <input type="range" id="sfx-vol" min="0" max="100" value="100" oninput="setSFXVol(this.value)">
         <span class="ap-val" id="sfx-vol-label">100</span>
       </div>
+      <div class="ap-row" id="yt-row">
+        <div id="yt-row-inner">
+          <input id="yt-url" type="text" placeholder="Paste YouTube link…" />
+          <button id="yt-play-btn" onclick="ytPlay()">▶ PLAY</button>
+          <button id="yt-revert-btn" onclick="ytRevert()">↺ REVERT</button>
+        </div>
+        <div id="yt-status"></div>
+      </div>
     </div>
+  </div>
+  <div id="yt-player-wrap" style="position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;overflow:hidden;">
+    <div id="yt-player"></div>
   </div>
 
   <!-- SCREEN 1: Setup -->
@@ -432,10 +453,10 @@
         <div id="standings"></div>
       </div>
     </div>
-    <div class="panel" style="padding:1rem 1.25rem">
+    <div class="panel" style="padding:1rem 1.25rem;position:relative;z-index:998">
       <div id="controls">
         <button class="btn primary" id="race-btn" onclick="startRace()">START RACE &gt;</button>
-        <button class="btn" onclick="resetRace()">NEW RACE</button>
+        <button class="btn go" onclick="resetRace()">NEW RACE</button>
       </div>
     </div>
   </div>
@@ -1229,8 +1250,8 @@ const SFX = (() => {
   let _bgVol=1, _sfxVol=1, _bgMuted=false, _sfxMuted=false;
   const BPM=172, B=60/BPM;
 
-  // 16-beat chiptune loop in C major pentatonic
-  const MELODY=[
+  // A section: 16-beat main theme (C major pentatonic)
+  const MELODY_A=[
     [784,.5],[659,.5],[523,.5],[659,.5],
     [784,.5],[880,.5],[784,.5],[659,.5],
     [659,.5],[784,.5],[523,.5],[659,.5],
@@ -1240,7 +1261,22 @@ const SFX = (() => {
     [784,.5],[659,.5],[523,.5],[392,.5],
     [523,.5],[392,.5],[523,1.0],
   ];
-  const BASS=[[131,4],[98,4],[131,4],[98,2],[131,2]];
+  // B section: 16-beat bridge (higher register, more spacious feel)
+  const MELODY_B=[
+    [1047,.5],[880,.5],[784,.5],[659,.5],
+    [523,1.0],[659,.5],[784,.5],
+    [659,.5],[523,.5],[392,.5],[523,.5],
+    [659,.5],[784,.5],[659,1.0],
+    [392,.5],[523,.5],[659,.5],[784,.5],
+    [880,.5],[784,.5],[659,.5],[880,.5],
+    [1047,.5],[880,.5],[784,.5],[659,.5],
+    [523,.5],[659,.5],[523,1.0],
+  ];
+  const BASS_A=[[131,4],[98,4],[131,4],[98,2],[131,2]];
+  // B section bass: alternating root-fifth for contrast
+  const BASS_B=[[131,2],[196,2],[131,2],[196,2],[131,2],[196,2],[131,2],[98,2]];
+  const PATTERN=[0,0,1,0]; // A-A-B-A
+  let _section=0;
 
   function _init(){
     if(ctx){if(ctx.state==='suspended')ctx.resume();return true;}
@@ -1277,17 +1313,21 @@ const SFX = (() => {
   function _loop(){
     if(!bgPlaying||!ctx)return;
     const now=ctx.currentTime;
+    const isB=PATTERN[_section%PATTERN.length]===1;
+    const melody=isB?MELODY_B:MELODY_A;
+    const bass=isB?BASS_B:BASS_A;
     let t=now;
-    MELODY.forEach(([f,b])=>{_n(f,'square',.6,t,b*B*.85,bgBus);t+=b*B;});
+    melody.forEach(([f,b])=>{_n(f,'square',.6,t,b*B*.85,bgBus);t+=b*B;});
     let t2=now;
-    BASS.forEach(([f,b])=>{_n(f,'triangle',.7,t2,b*B*.8,bgBus);t2+=b*B;});
-    const total=MELODY.reduce((s,[,b])=>s+b,0);
+    bass.forEach(([f,b])=>{_n(f,'triangle',.7,t2,b*B*.8,bgBus);t2+=b*B;});
+    const total=melody.reduce((s,[,b])=>s+b,0);
     for(let beat=0;beat<total;beat+=2)_kick(now+beat*B);
+    _section++;
     bgTimer=setTimeout(_loop,(total*B-.05)*1000);
   }
 
-  function _startBG(){if(bgPlaying||!ctx||_bgMuted)return;bgPlaying=true;_loop();}
-  function _stopBG(){bgPlaying=false;if(bgTimer){clearTimeout(bgTimer);bgTimer=null;}}
+  function _startBG(){if(bgPlaying||!ctx||_bgMuted)return;bgPlaying=true;if(bgBus)bgBus.gain.value=_bgVol*0.12;_loop();}
+  function _stopBG(){bgPlaying=false;_section=0;if(bgTimer){clearTimeout(bgTimer);bgTimer=null;}if(bgBus)bgBus.gain.value=0;}
 
   function click(){
     if(!ctx)return;
@@ -1354,7 +1394,10 @@ const SFX = (() => {
   document.addEventListener('click',_boot,true);
   document.addEventListener('touchstart',_boot,true);
 
-  return{click,gunshot,winJingle,setBGVol,setSFXVol,toggleBGMute,toggleSFXMute};
+  function stopChiptune(){_stopBG();}
+  function startChiptune(){if(_init()&&!_bgMuted)_startBG();}
+  function isBGMuted(){return _bgMuted;}
+  return{click,gunshot,winJingle,setBGVol,setSFXVol,toggleBGMute,toggleSFXMute,stopChiptune,startChiptune,isBGMuted};
 })();
 
 function toggleAudioPanel(e) {
@@ -1394,6 +1437,119 @@ document.addEventListener('click',e=>{
 document.addEventListener('focusin',e=>{
   if(e.target.matches('.name-input,.entries-input'))SFX.click();
 });
+
+// ── YouTube BGM ────────────────────────────────────────────────────────────
+let _ytPlayer = null;
+let _ytReady = false;
+let _ytMode = false;
+
+function _ytExtractId(url) {
+  const patterns = [
+    /[?&]v=([A-Za-z0-9_-]{11})/,
+    /youtu\.be\/([A-Za-z0-9_-]{11})/,
+    /embed\/([A-Za-z0-9_-]{11})/,
+    /shorts\/([A-Za-z0-9_-]{11})/,
+  ];
+  for (const p of patterns) {
+    const m = url.match(p);
+    if (m) return m[1];
+  }
+  return null;
+}
+
+function _ytSetStatus(msg, isErr) {
+  const el = document.getElementById('yt-status');
+  el.textContent = msg;
+  el.style.color = isErr ? '#ff6b6b' : 'var(--yel)';
+}
+
+function _ytLoadAPI(cb) {
+  if (window.YT && window.YT.Player) { cb(); return; }
+  window.onYouTubeIframeAPIReady = cb;
+  if (!document.getElementById('yt-api-script')) {
+    const s = document.createElement('script');
+    s.id = 'yt-api-script';
+    s.src = 'https://www.youtube.com/iframe_api';
+    document.head.appendChild(s);
+  }
+}
+
+function ytPlay() {
+  const url = document.getElementById('yt-url').value.trim();
+  if (!url) { _ytSetStatus('Paste a YouTube link first.', true); return; }
+  const id = _ytExtractId(url);
+  if (!id) { _ytSetStatus('Could not find a video ID in that link.', true); return; }
+
+  _ytSetStatus('Loading\u2026');
+  const vol = parseInt(document.getElementById('bgm-vol').value);
+
+  _ytLoadAPI(() => {
+    SFX.stopChiptune();
+
+    const onReady = (e) => {
+      _ytReady = true;
+      e.target.setVolume(vol);
+      e.target.playVideo();
+      _ytMode = true;
+      _ytSetStatus('');
+      document.getElementById('yt-revert-btn').style.display = 'inline-block';
+    };
+    const onError = (e) => {
+      const msgs = {2:'Invalid video ID.',5:'HTML5 error.',100:'Video not found.',101:'Embedding disabled for this video.',150:'Embedding disabled for this video.'};
+      _ytSetStatus(msgs[e.data] || 'Playback error.', true);
+      ytRevert();
+    };
+    const onStateChange = (e) => {
+      if (e.data === 0) e.target.playVideo(); // loop on end (fallback)
+    };
+
+    if (_ytPlayer && _ytReady) {
+      _ytPlayer.loadVideoById(id);
+      _ytPlayer.setVolume(vol);
+      _ytMode = true;
+      _ytSetStatus('');
+      document.getElementById('yt-revert-btn').style.display = 'inline-block';
+    } else {
+      _ytPlayer = new YT.Player('yt-player', {
+        height: '1', width: '1',
+        videoId: id,
+        playerVars: { autoplay: 1, loop: 1, playlist: id, controls: 0, disablekb: 1 },
+        events: { onReady, onError, onStateChange }
+      });
+    }
+  });
+}
+
+function ytRevert() {
+  if (_ytPlayer && _ytReady) _ytPlayer.stopVideo();
+  _ytMode = false;
+  _ytSetStatus('');
+  document.getElementById('yt-revert-btn').style.display = 'none';
+  document.getElementById('yt-url').value = '';
+  SFX.startChiptune();
+}
+
+// Extend setBGVol to also control YT volume when active
+const _origSetBGVol = setBGVol;
+setBGVol = function(val) {
+  _origSetBGVol(val);
+  if (_ytMode && _ytPlayer && _ytReady) _ytPlayer.setVolume(parseInt(val));
+};
+
+// Extend toggleBGMute to also mute/unmute YT when active
+const _origToggleBGMute = toggleBGMute;
+toggleBGMute = function() {
+  if (_ytMode && _ytPlayer && _ytReady) {
+    const btn = document.getElementById('bgm-mute');
+    const vol = document.getElementById('bgm-vol');
+    const aboutToMute = btn.textContent === '🔊';
+    if (aboutToMute) { _ytPlayer.mute(); } else { _ytPlayer.unMute(); _ytPlayer.setVolume(parseInt(vol.value)); }
+    btn.textContent = aboutToMute ? '🔇' : '🔊';
+    vol.disabled = aboutToMute;
+  } else {
+    _origToggleBGMute();
+  }
+};
 </script>
 </body>
 </html>
