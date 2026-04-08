@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PicCo Referral Raffle — Horse Race</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐴</text></svg>">
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@600&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -13,7 +13,7 @@
     --bg:#0d0520; --bg2:#160835; --panel:#4F0A95;
     --g1:#771FE5; --g2:#BF98F1; --g3:#DBBFFF;
     --red:#FF5621; --yel:#FFAF96; --white:#EDDFFF; --dim:#450E9D;
-    --px:'Press Start 2P',monospace;
+    --px:'Press Start 2P','Noto Sans TC',monospace;
   }
   body { font-family:var(--px); background:var(--bg); color:var(--white); min-height:100vh; padding:1rem 1rem 1.5rem; display:flex; flex-direction:column; align-items:center; }
   body::after { content:''; position:fixed; inset:0; background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.07) 2px,rgba(0,0,0,0.07) 4px); pointer-events:none; z-index:998; }
@@ -331,13 +331,40 @@
     0%   { transform:skewY(-7deg); }
     100% { transform:skewY(7deg); }
   }
+
+  /* ── Edit Mode ── */
+  #edit-mode-banner { display:none; text-align:center; font-size:7px; letter-spacing:2px; color:var(--yel); background:rgba(255,86,33,0.12); border:1px solid var(--red); outline:1px solid rgba(255,86,33,0.3); outline-offset:-3px; padding:6px 12px; margin-bottom:0.8rem; }
+  #edit-btn { background:none; border:1px solid var(--panel); color:var(--g2); cursor:pointer; font-family:var(--px); font-size:7px; letter-spacing:1px; padding:3px 7px; line-height:1; }
+  #edit-btn:hover { border-color:var(--g1); color:var(--white); }
+  body.edit-mode #edit-btn { background:var(--red); border-color:var(--red); color:#fff; }
+  .editable-text { cursor:default; display:inline; }
+  body.edit-mode .editable-text { cursor:text; border-bottom:1px dashed var(--yel); color:var(--yel); }
+  body.edit-mode .header h1 { text-shadow:none; }
+  body.edit-mode #site-tagline { cursor:text; color:var(--yel); border-bottom:1px dashed var(--yel); display:inline-block; }
+  .edit-inline-input { background:var(--bg); border:0; border-bottom:2px solid var(--yel); color:var(--yel); font-family:var(--px); font-size:inherit; letter-spacing:inherit; text-align:center; outline:none; padding:2px 2px; max-width:100%; }
+  #title-part1.cjk-text, #title-part2.cjk-text { font-size:1.1em; }
+  #site-tagline.cjk-text { font-size:11px; }
+  #flag-wrap { display:inline; vertical-align:middle; }
+  body.edit-mode #flag-wrap { display:inline-block; position:relative; }
+  #flag-toggle-btn { display:none; }
+  body.edit-mode #flag-toggle-btn { display:block; position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); background:rgba(13,5,32,0.88); border:1px solid var(--yel); color:var(--yel); font-family:var(--px); font-size:6px; padding:3px 6px; cursor:pointer; letter-spacing:1px; white-space:nowrap; z-index:2; }
+  body.flags-hidden .cross-flags { display:none; }
+  body.flags-hidden:not(.edit-mode) #title-part1 { margin-right:0.7em; }
+  body.flags-hidden.edit-mode #flag-toggle-btn { position:static; transform:none; display:inline-block; vertical-align:middle; margin:0 6px; }
+  #edit-mode-modal { display:none; position:fixed; inset:0; z-index:10000; background:rgba(0,0,0,0.82); align-items:center; justify-content:center; }
+  #edit-mode-modal.open { display:flex; }
+  #edit-mode-modal-box { background:var(--bg2); border:3px solid var(--red); outline:2px solid var(--yel); outline-offset:-5px; padding:2rem 1.8rem; max-width:360px; width:90%; text-align:center; }
+  #edit-mode-modal-box .modal-icon { font-size:36px; display:block; margin-bottom:14px; }
+  #edit-mode-modal-box .modal-title { font-size:10px; letter-spacing:3px; color:var(--yel); margin-bottom:14px; }
+  #edit-mode-modal-box .modal-body { font-size:8px; line-height:1.9; color:var(--white); letter-spacing:1px; margin-bottom:20px; }
+  #edit-mode-modal-box .modal-actions { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
 </style>
 </head>
 <body>
 <div id="crt-bezel">
 <div id="crt-screen">
 <div class="header">
-  <h1>REFERRAL<svg class="cross-flags" viewBox="0 0 80 58" xmlns="http://www.w3.org/2000/svg" style="height:0.85em;width:auto;overflow:visible;shape-rendering:crispEdges;image-rendering:pixelated">
+  <h1><span class="editable-text" id="title-part1">REFERRAL</span><span id="flag-wrap"><svg class="cross-flags" viewBox="0 0 80 58" xmlns="http://www.w3.org/2000/svg" style="height:0.85em;width:auto;overflow:visible;shape-rendering:crispEdges;image-rendering:pixelated">
     <!-- Left flag: pole static, fabric animated -->
     <g transform="translate(56,54) rotate(-40)">
       <rect x="-2" y="-48" width="4" height="48" fill="#8a9bac"/>
@@ -370,15 +397,19 @@
         <rect x="15" y="-38" width="5" height="5" fill="#1a1a1a"/>
       </g>
     </g>
-  </svg>RAFFLE</h1>
-  <div class="tagline">— PICCO GRAND PRIX · HORSE RACE —</div>
+  </svg><button id="flag-toggle-btn" onclick="toggleFlag()">HIDE</button></span><span class="editable-text" id="title-part2">RAFFLE</span></h1>
+  <div class="tagline" id="site-tagline">— PICCO GRAND PRIX · HORSE RACE —</div>
 </div>
 <div id="container">
+  <div id="edit-mode-banner">— EDIT MODE — CLICK TITLE OR TAGLINE TO EDIT —</div>
   <div class="score-bar">
     <div>RACES &nbsp;<span id="round-count">00</span></div>
     <div>PLAYERS &nbsp;<span id="player-count">00</span></div>
     <div>CREDIT &nbsp;<span>01</span></div>
-    <button id="mute-btn" onclick="toggleAudioPanel(event)" style="background:none;border:none;cursor:pointer;font-size:12px;padding:0;color:var(--yel);font-family:var(--px);">🔊</button>
+    <div style="display:flex;align-items:center;gap:8px;">
+      <button id="mute-btn" onclick="toggleAudioPanel(event)" style="background:none;border:none;cursor:pointer;font-size:12px;padding:0;color:var(--yel);font-family:var(--px);">🔊</button>
+      <button id="edit-btn" onclick="toggleEditMode()">EDIT</button>
+    </div>
     <div id="audio-panel" onclick="event.stopPropagation()">
       <div class="ap-row">
         <span class="ap-lbl">BGM</span>
@@ -489,6 +520,22 @@
     </div>
     <div class="modal-actions">
       <button class="btn primary" onclick="closeNoTrackModal()">GOT IT</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit mode lock modal -->
+<div id="edit-mode-modal">
+  <div id="edit-mode-modal-box">
+    <span class="modal-icon">✏️</span>
+    <div class="modal-title">EDIT MODE ACTIVE</div>
+    <div class="modal-body">
+      You're still in edit mode.<br><br>
+      Exit to discard all unsaved changes.
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeEditModal()">STAY IN EDIT MODE</button>
+      <button class="btn primary" onclick="exitAndCloseModal()">EXIT EDIT MODE</button>
     </div>
   </div>
 </div>
@@ -1620,6 +1667,138 @@ toggleBGMute = function() {
     _origToggleBGMute();
   }
 };
+
+// ── Edit Mode ─────────────────────────────────────────────
+(function() {
+  let snapshot  = null;  // text captured on edit mode entry
+  let undoStack = [];    // {el, text} entries for CMD+Z
+  let _reverting = false;
+
+  const IDS = ['title-part1', 'title-part2', 'site-tagline'];
+  const el = id => document.getElementById(id);
+
+  const CJK_RE = /[\u3000-\u9FFF\uF900-\uFAFF\uFF00-\uFFEF]/;
+  function updateCJKClass(node) {
+    node.classList.toggle('cjk-text', CJK_RE.test(node.textContent));
+  }
+
+  function captureSnapshot() {
+    snapshot = {};
+    IDS.forEach(id => { snapshot[id] = el(id).textContent; });
+  }
+
+  function restoreSnapshot() {
+    if (!snapshot) return;
+    _reverting = true;
+    IDS.forEach(id => {
+      // Remove any active inline input first
+      const node = el(id);
+      const inp = node.querySelector('input');
+      if (inp) node.textContent = snapshot[id];
+      else node.textContent = snapshot[id];
+      updateCJKClass(node);
+    });
+    _reverting = false;
+    snapshot = null;
+    undoStack = [];
+  }
+
+  function exitEditMode() {
+    document.body.classList.remove('edit-mode');
+    el('edit-btn').textContent = 'EDIT';
+    el('edit-mode-banner').style.display = 'none';
+  }
+
+  window.toggleEditMode = function() {
+    const isEdit = document.body.classList.toggle('edit-mode');
+    el('edit-btn').textContent = isEdit ? 'DONE' : 'EDIT';
+    el('edit-mode-banner').style.display = isEdit ? 'block' : 'none';
+    if (isEdit) {
+      captureSnapshot();
+      undoStack = [];
+    } else {
+      snapshot = null;
+      undoStack = [];
+    }
+  };
+
+  window.toggleFlag = function() {
+    const isHidden = document.body.classList.toggle('flags-hidden');
+    el('flag-toggle-btn').textContent = isHidden ? 'SHOW' : 'HIDE';
+  };
+
+  window.closeEditModal = function() {
+    el('edit-mode-modal').classList.remove('open');
+  };
+
+  window.exitAndCloseModal = function() {
+    closeEditModal();
+    restoreSnapshot();
+    exitEditMode();
+  };
+
+  // Block all interactions outside allowed zones while in edit mode
+  document.addEventListener('click', function(e) {
+    if (!document.body.classList.contains('edit-mode')) return;
+    if (e.target.closest('.header, #mute-btn, #audio-panel, #edit-btn, #edit-mode-modal')) return;
+    e.stopPropagation();
+    e.preventDefault();
+    el('edit-mode-modal').classList.add('open');
+  }, true);
+
+  // Hide EDIT button on non-setup screens
+  const _origShowScreen = window.showScreen;
+  window.showScreen = function(name) {
+    _origShowScreen(name);
+    el('edit-btn').style.display = (name === 'setup') ? '' : 'none';
+  };
+
+  function makeEditable(node) {
+    if (node.querySelector('input')) return;
+    const originalText = node.textContent;
+    const w = node.offsetWidth;
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.value = originalText;
+    input.className = 'edit-inline-input';
+    input.style.width = Math.max(w, 60) + 'px';
+    node.textContent = '';
+    node.appendChild(input);
+    input.focus();
+    input.select();
+    function commit() {
+      if (_reverting) return;
+      const newText = input.value.trim() || originalText;
+      if (newText !== originalText) undoStack.push({ node, text: originalText });
+      node.textContent = newText;
+      updateCJKClass(node);
+    }
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter')  { e.preventDefault(); input.blur(); }
+      if (e.key === 'Escape') { node.textContent = originalText; updateCJKClass(node); }
+    });
+    input.addEventListener('blur', commit);
+  }
+
+  document.addEventListener('click', function(e) {
+    if (!document.body.classList.contains('edit-mode')) return;
+    const target = e.target.closest('#title-part1, #title-part2, #site-tagline');
+    if (target) makeEditable(target);
+  });
+
+  // CMD+Z / Ctrl+Z — undo last committed change (not within active input)
+  document.addEventListener('keydown', function(e) {
+    if (!document.body.classList.contains('edit-mode')) return;
+    if (!(e.metaKey || e.ctrlKey) || e.key !== 'z') return;
+    if (document.activeElement && document.activeElement.classList.contains('edit-inline-input')) return;
+    e.preventDefault();
+    const entry = undoStack.pop();
+    if (entry) {
+      entry.node.textContent = entry.text;
+      updateCJKClass(entry.node);
+    }
+  });
+})();
 </script>
 </body>
 </html>
