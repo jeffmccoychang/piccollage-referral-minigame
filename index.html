@@ -67,6 +67,7 @@
   .emoji-btn { font-size:48px; background:none; border:none; cursor:pointer; line-height:1; padding:4px 4px 0; text-align:center; margin-top:12px; display:block; transition:transform 0.1s; }
   .emoji-btn:hover { transform:scale(1.15); }
   .name-input { width:100%; font-size:10px; padding:5px 4px; border:2px solid var(--dim); background:var(--bg2); color:var(--white); font-family:var(--px); outline:none; text-align:center; }
+  .name-input.has-cjk { font-size:13px; }
   .name-input:focus { border-color:var(--g2); }
   .entries-section { width:100%; display:flex; flex-direction:column; align-items:center; gap:4px; }
   .entries-label { font-size:5px; color:var(--dim); letter-spacing:2px; }
@@ -97,6 +98,7 @@
   #horses-layer { position:absolute; inset:0; pointer-events:none; }
   .horse-wrap { position:absolute; transform:translate(-50%,-50%); display:flex; flex-direction:column; align-items:center; justify-content:center; will-change:left,top; }
   .horse-name { font-size:8px; letter-spacing:0.5px; white-space:nowrap; margin-top:1px; text-shadow:0 0 4px #000, 0 0 4px #000; font-family:inherit; }
+  .horse-name.has-cjk { font-size:10px; }
   .horse-emoji { font-size:26px; line-height:1; display:inline-block; position:relative; }
 
   /* Standings */
@@ -106,6 +108,7 @@
   .standing-rank { color:var(--dim); font-size:13px; line-height:1; flex-shrink:0; }
   .standing-emoji { font-size:20px; flex-shrink:0; }
   .standing-name { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-size:11px; }
+  .standing-name.has-cjk { font-size:14px; }
   .standing-bar { width:44px; height:5px; background:var(--panel); border:1px solid var(--dim); flex-shrink:0; }
   .standing-fill { height:100%; transition:width 0.12s; }
 
@@ -351,13 +354,12 @@
   body.flags-hidden .cross-flags { display:none; }
   body.flags-hidden:not(.edit-mode) #title-part1 { margin-right:0.7em; }
   body.flags-hidden.edit-mode #flag-toggle-btn { position:static; transform:none; display:inline-block; vertical-align:middle; margin:0 6px; }
-  #edit-mode-modal { display:none; position:fixed; inset:0; z-index:10000; background:rgba(0,0,0,0.82); align-items:center; justify-content:center; }
-  #edit-mode-modal.open { display:flex; }
-  #edit-mode-modal-box { background:var(--bg2); border:3px solid var(--red); outline:2px solid var(--yel); outline-offset:-5px; padding:2rem 1.8rem; max-width:360px; width:90%; text-align:center; }
-  #edit-mode-modal-box .modal-icon { font-size:36px; display:block; margin-bottom:14px; }
-  #edit-mode-modal-box .modal-title { font-size:10px; letter-spacing:3px; color:var(--yel); margin-bottom:14px; }
-  #edit-mode-modal-box .modal-body { font-size:8px; line-height:1.9; color:var(--white); letter-spacing:1px; margin-bottom:20px; }
-  #edit-mode-modal-box .modal-actions { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+  #setup-screen { transition: opacity 0.15s; }
+  body.edit-mode #container { pointer-events: none; }
+  body.edit-mode #edit-btn,
+  body.edit-mode #mute-btn,
+  body.edit-mode #audio-panel { pointer-events: auto; }
+  body.edit-mode #setup-screen { opacity: 0.4; }
 </style>
 </head>
 <body>
@@ -524,22 +526,6 @@
   </div>
 </div>
 
-<!-- Edit mode lock modal -->
-<div id="edit-mode-modal">
-  <div id="edit-mode-modal-box">
-    <span class="modal-icon">✏️</span>
-    <div class="modal-title">EDIT MODE ACTIVE</div>
-    <div class="modal-body">
-      You're still in edit mode.<br><br>
-      Exit to discard all unsaved changes.
-    </div>
-    <div class="modal-actions">
-      <button class="btn" onclick="closeEditModal()">STAY IN EDIT MODE</button>
-      <button class="btn primary" onclick="exitAndCloseModal()">EXIT EDIT MODE</button>
-    </div>
-  </div>
-</div>
-
 <!-- New Race confirmation modal -->
 <div id="new-race-modal">
   <div id="new-race-modal-box">
@@ -690,6 +676,8 @@ function renumberCards() {
   });
 }
 
+function hasCJK(s){ return /[\u4e00-\u9fff\u3400-\u4dbf\uf900-\ufaff]/.test(s) && !/[a-zA-Z]/.test(s); }
+
 function addPlayerRow(name='', emoji=null, entries=1) {
   const grid=document.getElementById('player-rows');
   const idx=grid.children.length;
@@ -725,6 +713,8 @@ function addPlayerRow(name='', emoji=null, entries=1) {
   const input=document.createElement('input');
   input.type='text'; input.className='name-input';
   input.placeholder='Player '+(idx+1); input.value=name; input.maxLength=20;
+  if(hasCJK(name)) input.classList.add('has-cjk');
+  input.addEventListener('input', ()=>input.classList.toggle('has-cjk', hasCJK(input.value)));
   input.addEventListener('keydown', e=>{
     const all=[...document.querySelectorAll('.name-input')], i=all.indexOf(input);
     if(e.key==='ArrowDown'){e.preventDefault();if(i<all.length-1)all[i+1].focus();else{addPlayerRow();setTimeout(()=>{const u=[...document.querySelectorAll('.name-input')];u[u.length-1].focus();},0);}}
@@ -946,7 +936,7 @@ function buildRound() {
     emoji.style.filter = `drop-shadow(0 0 5px ${lane.color})`;
     hw.appendChild(emoji);
     const nameLabel = document.createElement('span');
-    nameLabel.className = 'horse-name';
+    nameLabel.className = 'horse-name' + (hasCJK(lane.name) ? ' has-cjk' : '');
     nameLabel.textContent = lane.name;
     nameLabel.style.color = lane.color;
     hw.appendChild(nameLabel);
@@ -1040,7 +1030,7 @@ function buildStandings() {
     if (i >= 10) row.style.display = 'none';
     row.innerHTML = `
       <span class="standing-emoji">${lane.emoji}</span>
-      <span class="standing-name" style="color:${lane.color}">${lane.name}</span>
+      <span class="standing-name${hasCJK(lane.name) ? ' has-cjk' : ''}" style="color:${lane.color}">${lane.name}</span>
       <div class="standing-bar"><div class="standing-fill" id="sb${i}" style="background:${lane.color};width:0%"></div></div>
     `;
     horsesEl.appendChild(row);
@@ -1670,11 +1660,7 @@ toggleBGMute = function() {
 
 // ── Edit Mode ─────────────────────────────────────────────
 (function() {
-  let snapshot  = null;  // text captured on edit mode entry
-  let undoStack = [];    // {el, text} entries for CMD+Z
-  let _reverting = false;
-
-  const IDS = ['title-part1', 'title-part2', 'site-tagline'];
+  let undoStack = [];
   const el = id => document.getElementById(id);
 
   const CJK_RE = /[\u3000-\u9FFF\uF900-\uFAFF\uFF00-\uFFEF]/;
@@ -1682,69 +1668,17 @@ toggleBGMute = function() {
     node.classList.toggle('cjk-text', CJK_RE.test(node.textContent));
   }
 
-  function captureSnapshot() {
-    snapshot = {};
-    IDS.forEach(id => { snapshot[id] = el(id).textContent; });
-  }
-
-  function restoreSnapshot() {
-    if (!snapshot) return;
-    _reverting = true;
-    IDS.forEach(id => {
-      // Remove any active inline input first
-      const node = el(id);
-      const inp = node.querySelector('input');
-      if (inp) node.textContent = snapshot[id];
-      else node.textContent = snapshot[id];
-      updateCJKClass(node);
-    });
-    _reverting = false;
-    snapshot = null;
-    undoStack = [];
-  }
-
-  function exitEditMode() {
-    document.body.classList.remove('edit-mode');
-    el('edit-btn').textContent = 'EDIT';
-    el('edit-mode-banner').style.display = 'none';
-  }
-
   window.toggleEditMode = function() {
     const isEdit = document.body.classList.toggle('edit-mode');
     el('edit-btn').textContent = isEdit ? 'DONE' : 'EDIT';
     el('edit-mode-banner').style.display = isEdit ? 'block' : 'none';
-    if (isEdit) {
-      captureSnapshot();
-      undoStack = [];
-    } else {
-      snapshot = null;
-      undoStack = [];
-    }
+    if (!isEdit) undoStack = [];
   };
 
   window.toggleFlag = function() {
     const isHidden = document.body.classList.toggle('flags-hidden');
     el('flag-toggle-btn').textContent = isHidden ? 'SHOW' : 'HIDE';
   };
-
-  window.closeEditModal = function() {
-    el('edit-mode-modal').classList.remove('open');
-  };
-
-  window.exitAndCloseModal = function() {
-    closeEditModal();
-    restoreSnapshot();
-    exitEditMode();
-  };
-
-  // Block all interactions outside allowed zones while in edit mode
-  document.addEventListener('click', function(e) {
-    if (!document.body.classList.contains('edit-mode')) return;
-    if (e.target.closest('.header, #mute-btn, #audio-panel, #edit-btn, #edit-mode-modal')) return;
-    e.stopPropagation();
-    e.preventDefault();
-    el('edit-mode-modal').classList.add('open');
-  }, true);
 
   // Hide EDIT button on non-setup screens
   const _origShowScreen = window.showScreen;
@@ -1767,7 +1701,6 @@ toggleBGMute = function() {
     input.focus();
     input.select();
     function commit() {
-      if (_reverting) return;
       const newText = input.value.trim() || originalText;
       if (newText !== originalText) undoStack.push({ node, text: originalText });
       node.textContent = newText;
@@ -1793,10 +1726,7 @@ toggleBGMute = function() {
     if (document.activeElement && document.activeElement.classList.contains('edit-inline-input')) return;
     e.preventDefault();
     const entry = undoStack.pop();
-    if (entry) {
-      entry.node.textContent = entry.text;
-      updateCJKClass(entry.node);
-    }
+    if (entry) { entry.node.textContent = entry.text; updateCJKClass(entry.node); }
   });
 })();
 </script>
