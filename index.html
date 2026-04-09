@@ -414,12 +414,9 @@
     padding: 1rem 0.75rem 1.5rem;
   }
 
-  /* Score bar — hide counters, keep controls right-aligned */
-  .score-bar > div:nth-child(-n+3) {
+  /* Score bar — hide CREDIT only, RACES and PLAYERS stay visible */
+  .score-bar > div:nth-child(3) {
     display: none;
-  }
-  .score-bar {
-    justify-content: flex-end;
   }
 
   /* Player grid — 2 columns (overrides the 700px → 3-col rule) */
