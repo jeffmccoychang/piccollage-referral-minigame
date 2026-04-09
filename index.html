@@ -414,9 +414,20 @@
     padding: 1rem 0.75rem 1.5rem;
   }
 
+  /* Title — shrink to fit one line */
+  .header h1 {
+    font-size: 16px;
+    letter-spacing: 2px;
+  }
+
   /* Score bar — hide CREDIT only, RACES and PLAYERS stay visible */
   .score-bar > div:nth-child(3) {
     display: none;
+  }
+
+  /* Track — full width to match standings in column layout */
+  #race-layout #track-wrap {
+    width: 100%;
   }
 
   /* Player grid — 2 columns (overrides the 700px → 3-col rule) */
