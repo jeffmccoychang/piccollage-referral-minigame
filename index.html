@@ -388,6 +388,34 @@
     ); }
   .cp-hue-thumb { position:absolute; width:14px; height:14px; border-radius:50%; background:#fff; border:2px solid rgba(0,0,0,0.35); top:50%; transform:translate(-50%,-50%); pointer-events:none; box-shadow:0 1px 4px rgba(0,0,0,0.5); left:75%; }
 </style>
+<style>
+/* ── Mobile Responsive (≤640px) ──────────────────────────── */
+@media (max-width: 640px) {
+
+  body {
+    padding: 0;
+  }
+
+  /* Flatten CRT bezel — remove all decorative chrome */
+  #crt-bezel {
+    background: transparent;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
+  }
+  #crt-bezel::before,
+  #crt-bezel::after {
+    display: none;
+  }
+
+  /* Screen — keep effects, tighten padding */
+  #crt-screen {
+    border-radius: 0;
+    padding: 1rem 0.75rem 1.5rem;
+  }
+
+}
+</style>
 </head>
 <body>
 <div id="crt-bezel">
