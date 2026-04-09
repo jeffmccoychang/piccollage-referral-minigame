@@ -14,12 +14,19 @@
     --g1:#771FE5; --g2:#BF98F1; --g3:#DBBFFF;
     --red:#FF5621; --yel:#FFAF96; --white:#EDDFFF; --dim:#450E9D;
     --px:'Press Start 2P','Noto Sans TC',monospace;
+    /* Derived shadow/tone variables — updated by theme engine */
+    --shadow-deep:#08021a; --shadow-btn:#200540; --shadow-btn2:#2a0655;
+    --shadow-go:#0a0520; --shadow-go2:#120528;
+    --shadow-red:#8b3010; --shadow-red2:#9b3a15; --red-light:#ff7a4a;
+    --card-bg:#0f0328; --card-bg2:#07011a; --room-bg:#06030f;
+    --green:#2a9d3a; --green-light:#38c44d; --shadow-green:#1a6124; --shadow-green2:#1e7a2c;
+    --track-dark1:#0a0315; --track-dark2:#1a0540;
   }
   body { font-family:var(--px); background:var(--bg); color:var(--white); min-height:100vh; padding:1rem 1rem 1.5rem; display:flex; flex-direction:column; align-items:center; }
   body::after { content:''; position:fixed; inset:0; background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.07) 2px,rgba(0,0,0,0.07) 4px); pointer-events:none; z-index:998; }
   #container { width:100%; max-width:1200px; }
   .header { text-align:center; margin-bottom:1.2rem; }
-  .header h1 { font-size:clamp(20px,5vw,40px); color:var(--g2); text-shadow:4px 4px 0 #08021a,-2px -2px 0 var(--g1),2px 0 0 var(--red),-2px 0 0 var(--g3); letter-spacing:4px; line-height:1.3; margin-bottom:10px; }
+  .header h1 { font-size:clamp(20px,5vw,40px); color:var(--g2); text-shadow:4px 4px 0 var(--shadow-deep),-2px -2px 0 var(--g1),2px 0 0 var(--red),-2px 0 0 var(--g3); letter-spacing:4px; line-height:1.3; margin-bottom:10px; }
   .header .tagline { font-size:8px; letter-spacing:3px; color:var(--dim); margin-top:8px; }
   @keyframes blink { 50%{opacity:0} }
   .score-bar { display:flex; justify-content:space-between; align-items:center; font-size:8px; border:2px solid var(--panel); background:var(--bg2); padding:8px 14px; margin-bottom:1.2rem; letter-spacing:1px; position:relative; }
@@ -44,21 +51,21 @@
   #yt-status { font-size:6px; letter-spacing:1px; color:var(--yel); min-height:10px; }
   .panel { background:var(--bg2); border:3px solid var(--panel); outline:2px solid var(--g1); outline-offset:-5px; padding:1.4rem; margin-bottom:1.2rem; }
   .panel-title { font-size:9px; letter-spacing:2px; color:var(--g2); margin-bottom:14px; }
-  .btn { padding:10px 18px; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; border:0; outline:none; background:var(--panel); color:var(--white); cursor:pointer; font-family:var(--px); box-shadow:0 4px 0 #200540,4px 0 0 #2a0655; transition:all 0.08s; }
+  .btn { padding:10px 18px; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; border:0; outline:none; background:var(--panel); color:var(--white); cursor:pointer; font-family:var(--px); box-shadow:0 4px 0 var(--shadow-btn),4px 0 0 var(--shadow-btn2); transition:all 0.08s; }
   .btn:hover { background:var(--dim); }
   .btn:active { transform:translate(2px,3px); box-shadow:none; }
-  .btn.primary { background:var(--red); color:#fff; box-shadow:0 4px 0 #8b3010,4px 0 0 #9b3a15; }
-  .btn.primary:hover { background:#ff7a4a; }
-  .btn.go { background:var(--panel); color:var(--white); box-shadow:0 4px 0 #0a0520,4px 0 0 #120528; }
+  .btn.primary { background:var(--red); color:#fff; box-shadow:0 4px 0 var(--shadow-red),4px 0 0 var(--shadow-red2); }
+  .btn.primary:hover { background:var(--red-light); }
+  .btn.go { background:var(--panel); color:var(--white); box-shadow:0 4px 0 var(--shadow-go),4px 0 0 var(--shadow-go2); }
   .btn.go:hover { background:var(--dim); }
-  #next-btn { background:#2a9d3a; color:#fff; box-shadow:0 4px 0 #1a6124,4px 0 0 #1e7a2c; }
-  #next-btn:hover { background:#38c44d; }
+  #next-btn { background:var(--green); color:#fff; box-shadow:0 4px 0 var(--shadow-green),4px 0 0 var(--shadow-green2); }
+  #next-btn:hover { background:var(--green-light); }
   .btn:disabled { opacity:0.35; cursor:default; transform:none; }
 
   /* Setup — card grid */
   .player-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:10px; margin-bottom:14px; }
   @media (max-width:700px) { .player-grid { grid-template-columns:repeat(3,1fr); } }
-  .player-card { background:linear-gradient(180deg,#0f0328 0%,#07011a 100%); border:3px solid var(--dim); position:relative; display:flex; flex-direction:column; align-items:center; padding:10px 8px 12px; gap:6px; transition:border-color 0.15s, box-shadow 0.15s; }
+  .player-card { background:linear-gradient(180deg,var(--card-bg) 0%,var(--card-bg2) 100%); border:3px solid var(--dim); position:relative; display:flex; flex-direction:column; align-items:center; padding:10px 8px 12px; gap:6px; transition:border-color 0.15s, box-shadow 0.15s; }
   .player-card:hover { border-color:var(--g2); box-shadow:0 0 12px rgba(191,152,241,0.25), inset 0 0 20px rgba(119,31,229,0.08); }
   .player-card:hover .remove-btn { opacity:1; }
   .player-num { position:absolute; top:5px; left:7px; font-size:6px; color:var(--dim); letter-spacing:1px; }
@@ -148,7 +155,7 @@
   #finish-snapshot-wrap { display:none; margin:0 auto 1.2rem; max-width:400px; border:3px solid var(--panel); outline:2px solid var(--g1); outline-offset:-5px; overflow:hidden; }
   #finish-snapshot-img { display:block; width:100%; image-rendering:pixelated; }
   #finish-snapshot-img[src=""], #finish-snapshot-img:not([src]) { display:none; }
-  #winner-name { padding:10px 14px 12px; font-size:clamp(16px,3.5vw,26px); color:var(--red); text-shadow:3px 3px 0 #8b3010; letter-spacing:3px; line-height:1.4; border-top:2px solid var(--panel); background:var(--bg2); }
+  #winner-name { padding:10px 14px 12px; font-size:clamp(16px,3.5vw,26px); color:var(--red); text-shadow:3px 3px 0 var(--shadow-red); letter-spacing:3px; line-height:1.4; border-top:2px solid var(--panel); background:var(--bg2); }
 
   /* New Race confirmation modal */
   #new-race-modal { display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.75); align-items:center; justify-content:center; }
@@ -173,7 +180,7 @@
 
   /* Dark room backdrop */
   body {
-    background-color:#06030f;
+    background-color:var(--room-bg);
     background-image:
       repeating-linear-gradient(0deg, transparent, transparent 79px, rgba(119,31,229,0.12) 79px, rgba(119,31,229,0.12) 82px),
       repeating-linear-gradient(90deg, transparent, transparent 79px, rgba(119,31,229,0.12) 79px, rgba(119,31,229,0.12) 82px);
@@ -223,12 +230,12 @@
     width:7px;
     height:7px;
     border-radius:50%;
-    background:#771FE5;
-    box-shadow:0 0 6px #771FE5,0 0 16px #771FE5;
+    background:var(--g1);
+    box-shadow:0 0 6px var(--g1),0 0 16px var(--g1);
     animation:led-pulse 3s ease-in-out infinite alternate;
   }
   @keyframes led-pulse {
-    to { box-shadow:0 0 3px #450E9D,0 0 6px #450E9D; opacity:0.55; }
+    to { box-shadow:0 0 3px var(--dim),0 0 6px var(--dim); opacity:0.55; }
   }
 
   /* ── Screen ── */
@@ -281,7 +288,7 @@
   /* ── Phosphor glow on key text ── */
   .header h1 {
     text-shadow:
-      4px 4px 0 #08021a,
+      4px 4px 0 var(--shadow-deep),
       -2px -2px 0 var(--g1),
       2px 0 0 var(--red),
       -2px 0 0 var(--g3),
@@ -303,10 +310,10 @@
   }
   #next-btn {
     text-shadow:0 0 8px rgba(255,255,255,0.6);
-    box-shadow:0 4px 0 #1a6124,4px 0 0 #1e7a2c,0 0 12px rgba(42,157,58,0.5);
+    box-shadow:0 4px 0 var(--shadow-green),4px 0 0 var(--shadow-green2),0 0 12px rgba(42,157,58,0.5);
   }
   .btn.primary {
-    box-shadow:0 4px 0 #8b3010,4px 0 0 #9b3a15,0 0 12px rgba(255,86,33,0.35);
+    box-shadow:0 4px 0 var(--shadow-red),4px 0 0 var(--shadow-red2),0 0 12px rgba(255,86,33,0.35);
   }
 
   /* Keep container full-width inside screen */
@@ -360,6 +367,26 @@
   body.edit-mode #mute-btn,
   body.edit-mode #audio-panel { pointer-events: auto; }
   body.edit-mode #setup-screen { opacity: 0.4; }
+
+  /* ── Color Theme Picker ── */
+  #color-picker-panel { display:none; background:var(--bg2); border:1px solid var(--panel); outline:1px solid var(--dim); outline-offset:-3px; padding:10px 14px 13px; margin-bottom:0.8rem; }
+  body.edit-mode #color-picker-panel { display:block; pointer-events:auto; }
+  .cp-label { font-size:6px; letter-spacing:3px; color:var(--g2); text-align:center; margin-bottom:11px; }
+  .cp-presets { display:flex; gap:16px; justify-content:center; align-items:flex-end; margin-bottom:12px; }
+  .cp-swatch-wrap { display:flex; flex-direction:column; align-items:center; gap:5px; cursor:pointer; }
+  .cp-swatch { width:18px; height:18px; border-radius:50%; border:2px solid rgba(255,255,255,0.15); cursor:pointer; transition:transform 0.12s,border-color 0.12s,box-shadow 0.12s; padding:0; background:none; }
+  .cp-swatch:hover { transform:scale(1.2); border-color:rgba(255,255,255,0.5); }
+  .cp-swatch-wrap.active .cp-swatch { border-color:var(--white); transform:scale(1.3); box-shadow:0 0 8px var(--g1); }
+  .cp-swatch-name { font-size:5px; letter-spacing:1.5px; color:var(--dim); }
+  .cp-swatch-wrap.active .cp-swatch-name { color:var(--g2); }
+  .cp-hue-row { display:flex; align-items:center; gap:10px; }
+  .cp-hue-label { font-size:5px; letter-spacing:2px; color:var(--dim); flex-shrink:0; }
+  .cp-hue-track { flex:1; height:8px; border-radius:4px; cursor:pointer; position:relative; border:1px solid rgba(255,255,255,0.08);
+    background:linear-gradient(to right,
+      hsl(0,85%,58%),hsl(30,85%,58%),hsl(60,85%,58%),hsl(90,85%,58%),hsl(120,85%,58%),hsl(150,85%,58%),
+      hsl(180,85%,58%),hsl(210,85%,58%),hsl(240,85%,58%),hsl(270,85%,58%),hsl(300,85%,58%),hsl(330,85%,58%),hsl(360,85%,58%)
+    ); }
+  .cp-hue-thumb { position:absolute; width:14px; height:14px; border-radius:50%; background:#fff; border:2px solid rgba(0,0,0,0.35); top:50%; transform:translate(-50%,-50%); pointer-events:none; box-shadow:0 1px 4px rgba(0,0,0,0.5); left:75%; }
 </style>
 </head>
 <body>
@@ -404,6 +431,16 @@
 </div>
 <div id="container">
   <div id="edit-mode-banner">— EDIT MODE — CLICK TITLE OR TAGLINE TO EDIT —</div>
+  <div id="color-picker-panel">
+    <div class="cp-label">— COLOR THEME —</div>
+    <div class="cp-presets"></div>
+    <div class="cp-hue-row">
+      <span class="cp-hue-label">HUE</span>
+      <div class="cp-hue-track" id="cp-hue-track">
+        <div class="cp-hue-thumb" id="cp-hue-thumb"></div>
+      </div>
+    </div>
+  </div>
   <div class="score-bar">
     <div>RACES &nbsp;<span id="round-count">00</span></div>
     <div>PLAYERS &nbsp;<span id="player-count">00</span></div>
@@ -472,7 +509,7 @@
     <div id="remaining">REMAINING: <span id="remaining-count">0</span> PLAYERS</div>
     <div id="race-layout">
       <div id="track-wrap">
-        <svg id="track-svg" viewBox="0 0 800 480" style="width:100%;display:block;background:#0d0520"></svg>
+        <svg id="track-svg" viewBox="0 0 800 480" style="width:100%;display:block;background:var(--bg)"></svg>
         <div id="horses-layer"></div>
       </div>
       <div class="panel" id="standings-side">
@@ -764,12 +801,14 @@ function buildTrackSelectScreen() {
     card.className = 'track-card' + (selectedTracks.includes(track.id) ? ' selected' : '');
     card.id = 'tc-' + track.id;
     const vb = `-${PAD} -${PAD} ${track.vw + PAD*2} ${track.vh + PAD*2}`;
+    const _cs = getComputedStyle(document.documentElement);
+    const _tc = { bg:_cs.getPropertyValue('--bg').trim(), panel:_cs.getPropertyValue('--panel').trim(), d1:_cs.getPropertyValue('--track-dark1').trim(), d2:_cs.getPropertyValue('--track-dark2').trim() };
     card.innerHTML = `
-      <svg viewBox="${vb}" style="width:100%;display:block;background:#0d0520">
-        <path d="${track.d}" stroke="#4F0A95" stroke-width="88" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="${track.d}" stroke="#0a0315" stroke-width="74" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="${track.d}" stroke="#1a0540" stroke-width="68" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-        <path d="${track.d}" stroke="#0d0520" stroke-width="60" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <svg viewBox="${vb}" style="width:100%;display:block;background:${_tc.bg}">
+        <path d="${track.d}" stroke="${_tc.panel}" stroke-width="88" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="${track.d}" stroke="${_tc.d1}" stroke-width="74" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="${track.d}" stroke="${_tc.d2}" stroke-width="68" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="${track.d}" stroke="${_tc.bg}" stroke-width="60" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
         <path d="${track.d}" stroke="rgba(255,255,255,0.22)" stroke-width="2" fill="none" stroke-dasharray="18,14"/>
       </svg>
       <div class="track-card-name">${track.name}</div>
@@ -845,12 +884,14 @@ function renderTrackSVG(track) {
   const svg = document.getElementById('track-svg');
   const vb = `-${PAD} -${PAD} ${track.vw + PAD*2} ${track.vh + PAD*2}`;
   svg.setAttribute('viewBox', vb);
+  const _rcs = getComputedStyle(document.documentElement);
+  const _rc = { bg:_rcs.getPropertyValue('--bg').trim(), panel:_rcs.getPropertyValue('--panel').trim(), d1:_rcs.getPropertyValue('--track-dark1').trim(), d2:_rcs.getPropertyValue('--track-dark2').trim() };
   svg.innerHTML = `
-    <rect x="${-PAD}" y="${-PAD}" width="${track.vw + PAD*2}" height="${track.vh + PAD*2}" fill="#0d0520"/>
-    <path d="${track.d}" stroke="#4F0A95" stroke-width="88" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="${track.d}" stroke="#0a0315" stroke-width="74" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="${track.d}" stroke="#1a0540" stroke-width="68" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-    <path d="${track.d}" stroke="#0d0520" stroke-width="60" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <rect x="${-PAD}" y="${-PAD}" width="${track.vw + PAD*2}" height="${track.vh + PAD*2}" fill="${_rc.bg}"/>
+    <path d="${track.d}" stroke="${_rc.panel}" stroke-width="88" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="${track.d}" stroke="${_rc.d1}" stroke-width="74" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="${track.d}" stroke="${_rc.d2}" stroke-width="68" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="${track.d}" stroke="${_rc.bg}" stroke-width="60" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
     <path d="${track.d}" stroke="rgba(255,255,255,0.32)" stroke-width="2.5" fill="none" stroke-dasharray="18,14"/>
     <path id="racing-line-path" d="${track.d}" stroke="none" fill="none"/>
   `;
@@ -1657,6 +1698,126 @@ toggleBGMute = function() {
     _origToggleBGMute();
   }
 };
+
+// ── Color Theme Engine ────────────────────────────────────
+(function(){
+  function hslHex(h,s,l){
+    h=((h%360)+360)%360; s/=100; l/=100;
+    const a=s*Math.min(l,1-l);
+    const f=n=>{const k=(n+h/30)%12,c=l-a*Math.max(-1,Math.min(k-3,9-k,1));return Math.round(255*c).toString(16).padStart(2,'0');};
+    return `#${f(0)}${f(8)}${f(4)}`;
+  }
+  function hexA(hex,a){
+    const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+    return `rgba(${r},${g},${b},${a})`;
+  }
+  function buildTheme(hp){
+    hp=((hp%360)+360)%360;
+    const isWarm=hp<=35||hp>=335;
+    const ha=isWarm?195:14, hay=isWarm?200:16;
+    return {
+      '--bg':hslHex(hp,67,9),'--bg2':hslHex(hp,73,12),'--panel':hslHex(hp,88,31),
+      '--g1':hslHex(hp,78,51),'--g2':hslHex(hp,65,77),'--g3':hslHex(hp,75,87),
+      '--white':hslHex(hp,55,93),'--dim':hslHex(hp,85,33),
+      '--red':hslHex(ha,100,56),'--yel':hslHex(hay,100,80),
+      '--shadow-deep':hslHex(hp,82,4),'--shadow-btn':hslHex(hp,83,14),'--shadow-btn2':hslHex(hp,80,18),
+      '--shadow-go':hslHex(hp,90,7),'--shadow-go2':hslHex(hp,85,10),
+      '--shadow-red':hslHex(ha,75,28),'--shadow-red2':hslHex(ha,72,33),'--red-light':hslHex(ha,100,65),
+      '--card-bg':hslHex(hp,85,7),'--card-bg2':hslHex(hp,90,5),'--room-bg':hslHex(hp,90,4),
+      '--green':'#2a9d3a','--green-light':'#38c44d','--shadow-green':'#1a6124','--shadow-green2':'#1e7a2c',
+      '--track-dark1':hslHex(hp,84,5),'--track-dark2':hslHex(hp,84,8),
+    };
+  }
+  const VOID_VARS={
+    '--bg':'#0d0520','--bg2':'#160835','--panel':'#4F0A95',
+    '--g1':'#771FE5','--g2':'#BF98F1','--g3':'#DBBFFF',
+    '--red':'#FF5621','--yel':'#FFAF96','--white':'#EDDFFF','--dim':'#450E9D',
+    '--shadow-deep':'#08021a','--shadow-btn':'#200540','--shadow-btn2':'#2a0655',
+    '--shadow-go':'#0a0520','--shadow-go2':'#120528',
+    '--shadow-red':'#8b3010','--shadow-red2':'#9b3a15','--red-light':'#ff7a4a',
+    '--card-bg':'#0f0328','--card-bg2':'#07011a','--room-bg':'#06030f',
+    '--green':'#2a9d3a','--green-light':'#38c44d','--shadow-green':'#1a6124','--shadow-green2':'#1e7a2c',
+    '--track-dark1':'#0a0315','--track-dark2':'#1a0540',
+  };
+  const PRESETS=[
+    {hue:270,name:'VOID', swatch:'#771FE5'},
+    {hue:198,name:'CYBER',swatch:'#21a9e3'},
+    {hue:18, name:'EMBER',swatch:'#e35b21'},
+    {hue:148,name:'JADE', swatch:'#21e37b'},
+    {hue:44, name:'GOLD', swatch:'#e3b021'},
+  ];
+  let currentHue=270;
+
+  function applyTheme(vars){
+    const root=document.documentElement;
+    Object.entries(vars).forEach(([k,v])=>root.style.setProperty(k,v));
+    const g1=vars['--g1'],g2=vars['--g2'],yel=vars['--yel'],red=vars['--red'],
+          dim=vars['--dim'],g3=vars['--g3'],sdep=vars['--shadow-deep'],
+          sred=vars['--shadow-red'],sred2=vars['--shadow-red2'],
+          sg=vars['--shadow-green'],sg2=vars['--shadow-green2'],
+          roomBg=vars['--room-bg'],cardBg=vars['--card-bg'],cardBg2=vars['--card-bg2'];
+    let s=document.getElementById('_theme_dyn');
+    if(!s){s=document.createElement('style');s.id='_theme_dyn';document.head.appendChild(s);}
+    s.textContent=`
+      body{background-color:${roomBg};background-image:repeating-linear-gradient(0deg,transparent,transparent 79px,${hexA(g1,0.12)} 79px,${hexA(g1,0.12)} 82px),repeating-linear-gradient(90deg,transparent,transparent 79px,${hexA(g1,0.12)} 79px,${hexA(g1,0.12)} 82px);}
+      #crt-screen{box-shadow:inset 0 0 120px rgba(0,0,0,0.6),inset 0 0 50px ${hexA(g1,0.07)},0 0 35px ${hexA(g1,0.3)},0 0 70px ${hexA(g1,0.1)};}
+      .header h1{text-shadow:4px 4px 0 ${sdep},-2px -2px 0 ${g1},2px 0 0 ${red},-2px 0 0 ${g3},0 0 18px ${g1},0 0 40px ${hexA(g1,0.55)};}
+      .header .tagline{text-shadow:0 0 10px ${g2},0 0 20px ${hexA(g2,0.4)};}
+      .panel-title{text-shadow:0 0 8px ${g2},0 0 18px ${hexA(g2,0.35)};}
+      .score-bar span{text-shadow:0 0 8px ${yel},0 0 16px ${hexA(yel,0.4)};}
+      .btn.primary{box-shadow:0 4px 0 ${sred},4px 0 0 ${sred2},0 0 12px ${hexA(red,0.35)};}
+      #next-btn{box-shadow:0 4px 0 ${sg},4px 0 0 ${sg2},0 0 12px rgba(42,157,58,0.5);}
+      .player-card{background:linear-gradient(180deg,${cardBg} 0%,${cardBg2} 100%);}
+      .player-card:hover{box-shadow:0 0 12px ${hexA(g2,0.25)},inset 0 0 20px ${hexA(g1,0.08)};}
+      #crt-bezel::after{background:${g1};box-shadow:0 0 6px ${g1},0 0 16px ${g1};}
+      @keyframes led-pulse{to{box-shadow:0 0 3px ${dim},0 0 6px ${dim};opacity:0.55;}}
+      .cp-swatch-wrap.active .cp-swatch{box-shadow:0 0 8px ${g1};}
+    `;
+  }
+
+  function applyHue(hp){
+    currentHue=hp;
+    applyTheme(hp===270?VOID_VARS:buildTheme(hp));
+    const thumb=document.getElementById('cp-hue-thumb');
+    if(thumb) thumb.style.left=(hp/360*100).toFixed(2)+'%';
+    document.querySelectorAll('.cp-swatch-wrap').forEach(w=>{
+      const ph=parseInt(w.dataset.hue);
+      const near=Math.abs(ph-hp)<6||Math.abs(ph-hp+360)<6||Math.abs(ph-hp-360)<6;
+      w.classList.toggle('active',near);
+    });
+  }
+
+  function buildPicker(){
+    const presetsEl=document.querySelector('#color-picker-panel .cp-presets');
+    if(!presetsEl) return;
+    presetsEl.innerHTML='';
+    PRESETS.forEach(p=>{
+      const wrap=document.createElement('div');
+      wrap.className='cp-swatch-wrap'+(p.hue===270?' active':'');
+      wrap.dataset.hue=p.hue;
+      wrap.innerHTML=`<button class="cp-swatch" style="background:${p.swatch}" title="${p.name}"></button><span class="cp-swatch-name">${p.name}</span>`;
+      wrap.addEventListener('click',()=>applyHue(p.hue));
+      presetsEl.appendChild(wrap);
+    });
+    const track=document.getElementById('cp-hue-track');
+    if(!track) return;
+    let dragging=false;
+    function hueFromEvent(e){
+      const rect=track.getBoundingClientRect();
+      const cx=e.touches?e.touches[0].clientX:e.clientX;
+      return Math.round(Math.max(0,Math.min(1,(cx-rect.left)/rect.width))*360);
+    }
+    track.addEventListener('mousedown',e=>{dragging=true;applyHue(hueFromEvent(e));});
+    track.addEventListener('touchstart',e=>{dragging=true;applyHue(hueFromEvent(e));},{passive:false});
+    document.addEventListener('mousemove',e=>{if(dragging)applyHue(hueFromEvent(e));});
+    document.addEventListener('touchmove',e=>{if(dragging){e.preventDefault();applyHue(hueFromEvent(e));}},{passive:false});
+    document.addEventListener('mouseup',()=>dragging=false);
+    document.addEventListener('touchend',()=>dragging=false);
+  }
+
+  buildPicker();
+  window._themeEngine={applyHue,getHue:()=>currentHue};
+})();
 
 // ── Edit Mode ─────────────────────────────────────────────
 (function() {
