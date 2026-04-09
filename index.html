@@ -1315,11 +1315,12 @@ function captureFinishSnapshot(callback) {
     if (wrap) wrap.style.display = 'block';
   }
 
-  // Fade to black — this covers the html2canvas capture delay
+  // Fade to black — wait for the CSS transition (0.35s) to complete before capturing
+  const FADE_MS = 350;
   if (overlay) overlay.style.opacity = '1';
 
   if (!trackWrapEl || !path || typeof domtoimage === 'undefined') {
-    showFrame(); revealWinner(); return;
+    setTimeout(() => { showFrame(); revealWinner(); }, FADE_MS); return;
   }
 
   const vbW = selectedTrack.vw + PAD * 2;
@@ -1330,26 +1331,28 @@ function captureFinishSnapshot(callback) {
   const fx  = (pt.x + PAD) / vbW * wrW;
   const fy  = (pt.y + PAD) / vbH * wrH;
 
-  const fallback = setTimeout(() => { showFrame(); revealWinner(); }, 3000);
+  const fallback = setTimeout(() => { showFrame(); revealWinner(); }, FADE_MS + 3000);
 
-  domtoimage.toCanvas(trackWrapEl)
-    .then(canvas => {
-      clearTimeout(fallback);
+  setTimeout(() => {
+    domtoimage.toCanvas(trackWrapEl)
+      .then(canvas => {
+        clearTimeout(fallback);
 
-      const cropW = Math.round(wrW * 0.55);
-      const cropH = Math.round(cropW * 0.62);
-      const cx    = Math.max(0, Math.min(Math.round(fx - cropW / 2), canvas.width  - cropW));
-      const cy    = Math.max(0, Math.min(Math.round(fy - cropH / 2), canvas.height - cropH));
-      const out = document.createElement('canvas');
-      out.width  = cropW;
-      out.height = cropH;
-      out.getContext('2d').drawImage(canvas, cx, cy, cropW, cropH, 0, 0, cropW, cropH);
-      const img = document.getElementById('finish-snapshot-img');
-      if (img) img.src = out.toDataURL('image/png');
-      showFrame();
-      revealWinner();
-    })
-    .catch(() => { clearTimeout(fallback); showFrame(); revealWinner(); });
+        const cropW = Math.round(wrW * 0.55);
+        const cropH = Math.round(cropW * 0.62);
+        const cx    = Math.max(0, Math.min(Math.round(fx - cropW / 2), canvas.width  - cropW));
+        const cy    = Math.max(0, Math.min(Math.round(fy - cropH / 2), canvas.height - cropH));
+        const out = document.createElement('canvas');
+        out.width  = cropW;
+        out.height = cropH;
+        out.getContext('2d').drawImage(canvas, cx, cy, cropW, cropH, 0, 0, cropW, cropH);
+        const img = document.getElementById('finish-snapshot-img');
+        if (img) img.src = out.toDataURL('image/png');
+        showFrame();
+        revealWinner();
+      })
+      .catch(() => { clearTimeout(fallback); showFrame(); revealWinner(); });
+  }, FADE_MS);
 }
 
 function declareWinner(winnerName) {
