@@ -1,0 +1,8 @@
+{
+  "name": "picco-referral-horse-racing",
+  "compatibility_date": "2026-04-08",
+  "assets": {
+    "directory": ".",
+    "not_found_handling": "single-page-application"
+  }
+}
