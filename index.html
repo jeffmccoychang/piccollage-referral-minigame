@@ -393,7 +393,7 @@
 @media (max-width: 640px) {
 
   body {
-    padding: 0;
+    padding: 0.5rem;
   }
 
   /* Flatten CRT bezel — remove all decorative chrome */
@@ -430,6 +430,13 @@
   /* Tighten panel padding */
   .panel {
     padding: 1rem 0.9rem;
+  }
+
+  /* Audio panel — full-width on mobile */
+  #audio-panel {
+    min-width: 0;
+    width: calc(100vw - 1.5rem);
+    right: 0;
   }
 
 }
