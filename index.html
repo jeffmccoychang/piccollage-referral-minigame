@@ -6,7 +6,7 @@
 <title>PicCo Referral Raffle — Horse Race</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🐴</text></svg>">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Noto+Sans+TC:wght@600&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+<script src="https://unpkg.com/dom-to-image-more@3.4.0/dist/dom-to-image-more.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -1318,7 +1318,7 @@ function captureFinishSnapshot(callback) {
   // Fade to black — this covers the html2canvas capture delay
   if (overlay) overlay.style.opacity = '1';
 
-  if (!trackWrapEl || !path || typeof html2canvas === 'undefined') {
+  if (!trackWrapEl || !path || typeof domtoimage === 'undefined') {
     showFrame(); revealWinner(); return;
   }
 
@@ -1332,7 +1332,7 @@ function captureFinishSnapshot(callback) {
 
   const fallback = setTimeout(() => { showFrame(); revealWinner(); }, 3000);
 
-  html2canvas(trackWrapEl, { scale: 1, logging: false, useCORS: true, imageTimeout: 0 })
+  domtoimage.toCanvas(trackWrapEl)
     .then(canvas => {
       clearTimeout(fallback);
 
