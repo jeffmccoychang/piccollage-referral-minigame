@@ -53,8 +53,10 @@
   .panel-title { font-size:9px; letter-spacing:2px; color:var(--g2); margin-bottom:14px; }
   .panel-hdr { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; }
   .panel-hdr .panel-title { margin-bottom:0; }
-  #reset-participants-btn { background:none; border:1px solid var(--panel); color:var(--g2); cursor:pointer; font-family:var(--px); font-size:7px; letter-spacing:1px; padding:4px 10px; line-height:1; }
+  .panel-hdr-actions { display:flex; gap:8px; }
+  #reset-participants-btn, #batch-participants-btn { background:none; border:1px solid var(--panel); color:var(--g2); cursor:pointer; font-family:var(--px); font-size:7px; letter-spacing:1px; padding:4px 10px; line-height:1; }
   #reset-participants-btn:hover { border-color:var(--red); color:var(--red); }
+  #batch-participants-btn:hover { border-color:var(--g2); color:var(--white); }
   .btn { padding:10px 18px; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; border:0; outline:none; background:var(--panel); color:var(--white); cursor:pointer; font-family:var(--px); box-shadow:0 4px 0 var(--shadow-btn),4px 0 0 var(--shadow-btn2); transition:all 0.08s; }
   .btn:hover { background:var(--dim); }
   .btn:active { transform:translate(2px,3px); box-shadow:none; }
@@ -162,14 +164,23 @@
   #winner-name { padding:10px 14px 12px; font-size:clamp(16px,3.5vw,26px); color:var(--red); text-shadow:3px 3px 0 var(--shadow-red); letter-spacing:3px; line-height:1.4; border-top:2px solid var(--panel); background:var(--bg2); }
 
   /* New Race confirmation modal */
-  #new-race-modal, #reset-modal { display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.75); align-items:center; justify-content:center; }
-  #new-race-modal.open, #reset-modal.open { display:flex; }
+  #new-race-modal, #reset-modal, #batch-modal { display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.75); align-items:center; justify-content:center; }
+  #new-race-modal.open, #reset-modal.open, #batch-modal.open { display:flex; }
   #reset-modal-box { background:var(--bg2); border:3px solid var(--panel); outline:2px solid var(--red); outline-offset:-5px; padding:2rem 1.8rem; max-width:380px; width:90%; text-align:center; }
   #reset-modal-box .modal-icon { font-size:36px; display:block; margin-bottom:14px; }
   #reset-modal-box .modal-title { font-size:10px; letter-spacing:3px; color:var(--yel); margin-bottom:14px; }
   #reset-modal-box .modal-body { font-size:8px; line-height:1.9; color:var(--white); letter-spacing:1px; margin-bottom:20px; }
   #reset-modal-box .modal-body span { color:var(--red); }
   #reset-modal-box .modal-actions { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+  #batch-modal-box { background:var(--bg2); border:3px solid var(--panel); outline:2px solid var(--g2); outline-offset:-5px; padding:2rem 1.8rem; max-width:440px; width:90%; text-align:center; }
+  #batch-modal-box .modal-icon { font-size:36px; display:block; margin-bottom:14px; }
+  #batch-modal-box .modal-title { font-size:10px; letter-spacing:3px; color:var(--yel); margin-bottom:12px; }
+  #batch-modal-box .modal-hint { font-size:8px; line-height:1.8; color:var(--g2); letter-spacing:1px; margin-bottom:14px; }
+  #batch-modal-box .modal-hint span { color:var(--white); }
+  #batch-input { width:100%; box-sizing:border-box; height:160px; resize:vertical; background:var(--bg); border:2px solid var(--dim); color:var(--white); font-family:var(--px); font-size:9px; line-height:1.7; padding:8px; outline:none; margin-bottom:8px; }
+  #batch-input:focus { border-color:var(--g2); }
+  #batch-error { font-size:8px; color:var(--red); letter-spacing:1px; min-height:11px; margin-bottom:12px; }
+  #batch-modal-box .modal-actions { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
   #new-race-modal-box { background:var(--bg2); border:3px solid var(--panel); outline:2px solid var(--red); outline-offset:-5px; padding:2rem 1.8rem; max-width:380px; width:90%; text-align:center; }
   #new-race-modal-box .modal-icon { font-size:36px; display:block; margin-bottom:14px; }
   #new-race-modal-box .modal-title { font-size:10px; letter-spacing:3px; color:var(--yel); margin-bottom:14px; }
@@ -552,7 +563,10 @@
     <div class="panel">
       <div class="panel-hdr">
         <div class="panel-title">&gt; ENTER PARTICIPANTS</div>
-        <button id="reset-participants-btn" onclick="confirmResetParticipants()">RESET</button>
+        <div class="panel-hdr-actions">
+          <button id="batch-participants-btn" onclick="openBatchModal()">BATCH</button>
+          <button id="reset-participants-btn" onclick="confirmResetParticipants()">RESET</button>
+        </div>
       </div>
       <div class="player-grid" id="player-rows"></div>
       <div class="setup-actions">
@@ -654,7 +668,7 @@
   </div>
 </div>
 
-<div id="reset-modal">
+<div id="reset-modal" onclick="if(event.target===this)closeResetModal()">
   <div id="reset-modal-box">
     <span class="modal-icon">🧹</span>
     <div class="modal-title">RESET PARTICIPANTS?</div>
@@ -665,6 +679,24 @@
     <div class="modal-actions">
       <button class="btn" onclick="closeResetModal()">&#9664; CANCEL</button>
       <button class="btn primary" onclick="doResetParticipants()">RESET</button>
+    </div>
+  </div>
+</div>
+
+<div id="batch-modal" onclick="if(event.target===this)closeBatchModal()">
+  <div id="batch-modal-box">
+    <span class="modal-icon">📋</span>
+    <div class="modal-title">BATCH ADD PARTICIPANTS</div>
+    <div class="modal-hint">
+      One name per line.<br>
+      Add <span>*N</span>, <span>xN</span> or <span>(N)</span> for entries.<br>
+      This <span>replaces</span> the current roster.
+    </div>
+    <textarea id="batch-input" placeholder="Input entries here..."></textarea>
+    <div id="batch-error"></div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeBatchModal()">&#9664; CANCEL</button>
+      <button class="btn primary" onclick="applyBatch()">ADD ALL</button>
     </div>
   </div>
 </div>
@@ -919,6 +951,45 @@ function doResetParticipants(){
   const grid=document.getElementById('player-rows');
   grid.innerHTML='';
   for(let i=0;i<5;i++) addPlayerRow();
+}
+
+// ── Batch add participants ────────────────────────────────
+// Paste one name per line; optional trailing *N / xN / (N) sets entry count.
+function parseBatchLine(line){
+  let name=line.trim();
+  let count=1, m;
+  if(m=name.match(/\(\s*(\d+)\s*\)\s*$/))        { count=parseInt(m[1],10); name=name.slice(0,m.index).trim(); }
+  else if(m=name.match(/\*\s*(\d+)\s*$/))         { count=parseInt(m[1],10); name=name.slice(0,m.index).trim(); }
+  else if(m=name.match(/(^|\s)[xX]\s*(\d+)\s*$/)) { count=parseInt(m[2],10); name=name.slice(0,m.index).trim(); }
+  else if(m=name.match(/(^|\s)(\d+)\s*[xX]\s*$/)) { count=parseInt(m[2],10); name=name.slice(0,m.index).trim(); }
+  return {name, count};
+}
+function shuffleEmojis(){
+  const a=EMOJI_OPTIONS.slice();
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}
+  return a;
+}
+function openBatchModal(){
+  closePicker();
+  document.getElementById('batch-error').textContent='';
+  document.getElementById('batch-modal').classList.add('open');
+  setTimeout(()=>document.getElementById('batch-input').focus(),0);
+}
+function closeBatchModal(){ document.getElementById('batch-modal').classList.remove('open'); }
+function applyBatch(){
+  const text=document.getElementById('batch-input').value;
+  const entries=text.split(/\r?\n/).map(parseBatchLine).filter(e=>e.name);
+  const err=document.getElementById('batch-error');
+  if(!entries.length){ err.textContent='Enter at least one name.'; return; }
+  const emojis=shuffleEmojis();
+  closePicker();
+  const grid=document.getElementById('player-rows');
+  grid.innerHTML='';
+  entries.forEach((e,i)=>addPlayerRow(e.name.slice(0,20), emojis[i%emojis.length], Math.min(20,Math.max(1,e.count))));
+  while(grid.children.length<2) addPlayerRow();
+  document.getElementById('batch-input').value='';
+  closeBatchModal();
+  scheduleSync();
 }
 
 function getPlayersFromForm() {
