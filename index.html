@@ -51,6 +51,10 @@
   #yt-status { font-size:6px; letter-spacing:1px; color:var(--yel); min-height:10px; }
   .panel { background:var(--bg2); border:3px solid var(--panel); outline:2px solid var(--g1); outline-offset:-5px; padding:1.4rem; margin-bottom:1.2rem; }
   .panel-title { font-size:9px; letter-spacing:2px; color:var(--g2); margin-bottom:14px; }
+  .panel-hdr { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; }
+  .panel-hdr .panel-title { margin-bottom:0; }
+  #reset-participants-btn { background:none; border:1px solid var(--panel); color:var(--g2); cursor:pointer; font-family:var(--px); font-size:7px; letter-spacing:1px; padding:4px 10px; line-height:1; }
+  #reset-participants-btn:hover { border-color:var(--red); color:var(--red); }
   .btn { padding:10px 18px; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; border:0; outline:none; background:var(--panel); color:var(--white); cursor:pointer; font-family:var(--px); box-shadow:0 4px 0 var(--shadow-btn),4px 0 0 var(--shadow-btn2); transition:all 0.08s; }
   .btn:hover { background:var(--dim); }
   .btn:active { transform:translate(2px,3px); box-shadow:none; }
@@ -158,8 +162,14 @@
   #winner-name { padding:10px 14px 12px; font-size:clamp(16px,3.5vw,26px); color:var(--red); text-shadow:3px 3px 0 var(--shadow-red); letter-spacing:3px; line-height:1.4; border-top:2px solid var(--panel); background:var(--bg2); }
 
   /* New Race confirmation modal */
-  #new-race-modal { display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.75); align-items:center; justify-content:center; }
-  #new-race-modal.open { display:flex; }
+  #new-race-modal, #reset-modal { display:none; position:fixed; inset:0; z-index:1000; background:rgba(0,0,0,0.75); align-items:center; justify-content:center; }
+  #new-race-modal.open, #reset-modal.open { display:flex; }
+  #reset-modal-box { background:var(--bg2); border:3px solid var(--panel); outline:2px solid var(--red); outline-offset:-5px; padding:2rem 1.8rem; max-width:380px; width:90%; text-align:center; }
+  #reset-modal-box .modal-icon { font-size:36px; display:block; margin-bottom:14px; }
+  #reset-modal-box .modal-title { font-size:10px; letter-spacing:3px; color:var(--yel); margin-bottom:14px; }
+  #reset-modal-box .modal-body { font-size:8px; line-height:1.9; color:var(--white); letter-spacing:1px; margin-bottom:20px; }
+  #reset-modal-box .modal-body span { color:var(--red); }
+  #reset-modal-box .modal-actions { display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
   #new-race-modal-box { background:var(--bg2); border:3px solid var(--panel); outline:2px solid var(--red); outline-offset:-5px; padding:2rem 1.8rem; max-width:380px; width:90%; text-align:center; }
   #new-race-modal-box .modal-icon { font-size:36px; display:block; margin-bottom:14px; }
   #new-race-modal-box .modal-title { font-size:10px; letter-spacing:3px; color:var(--yel); margin-bottom:14px; }
@@ -540,7 +550,10 @@
   <!-- SCREEN 1: Setup -->
   <div id="setup-screen">
     <div class="panel">
-      <div class="panel-title">&gt; ENTER PARTICIPANTS</div>
+      <div class="panel-hdr">
+        <div class="panel-title">&gt; ENTER PARTICIPANTS</div>
+        <button id="reset-participants-btn" onclick="confirmResetParticipants()">RESET</button>
+      </div>
       <div class="player-grid" id="player-rows"></div>
       <div class="setup-actions">
         <button class="btn go" onclick="addPlayerRow()">+ ADD PLAYER</button>
@@ -637,6 +650,21 @@
     <div class="modal-actions">
       <button class="btn" onclick="closeNewRaceModal()">&#9664; KEEP RACING</button>
       <button class="btn primary" onclick="confirmResetRace()">NEW RACE</button>
+    </div>
+  </div>
+</div>
+
+<div id="reset-modal">
+  <div id="reset-modal-box">
+    <span class="modal-icon">🧹</span>
+    <div class="modal-title">RESET PARTICIPANTS?</div>
+    <div class="modal-body">
+      This clears all <span>names, emojis and entries</span> and resets the roster back to default.<br><br>
+      Are you sure?
+    </div>
+    <div class="modal-actions">
+      <button class="btn" onclick="closeResetModal()">&#9664; CANCEL</button>
+      <button class="btn primary" onclick="doResetParticipants()">RESET</button>
     </div>
   </div>
 </div>
@@ -746,7 +774,7 @@ function togglePicker(btn, e) {
     sp.style.cssText = 'font-size:22px;cursor:pointer;padding:3px;';
     sp.onmouseover = () => sp.style.background = 'var(--panel)';
     sp.onmouseout  = () => sp.style.background = '';
-    sp.onclick = ev => { ev.stopPropagation(); SFX.click(); btn.textContent = em; closePicker(); };
+    sp.onclick = ev => { ev.stopPropagation(); SFX.click(); btn.textContent = em; closePicker(); scheduleSync(); };
     picker.appendChild(sp);
   });
   document.body.appendChild(picker);
@@ -843,6 +871,54 @@ function addPlayerRow(name='', emoji=null, entries=1) {
   card.appendChild(entriesSection);
 
   grid.appendChild(card);
+}
+
+// ── Participant persistence via URL (?p=) ─────────────────
+// Captures every row (incl. blanks) so a copied URL restores the form exactly.
+function getFormState() {
+  return [...document.querySelectorAll('#player-rows .player-card')].map(card=>({
+    n: card.querySelector('.name-input').value,
+    e: card.querySelector('.emoji-btn').textContent,
+    c: parseInt(card.querySelector('.entries-input').value)||1
+  }));
+}
+function syncURL() {
+  const rows=getFormState();
+  const hasData=rows.some(r=>r.n.trim());
+  const url=new URL(window.location.href);
+  if(hasData) url.searchParams.set('p', JSON.stringify(rows));
+  else url.searchParams.delete('p');
+  history.replaceState(null,'',url);
+}
+function scheduleSync(){ setTimeout(syncURL,0); }
+function loadStateFromURL() {
+  const raw=new URL(window.location.href).searchParams.get('p');
+  if(!raw) return null;
+  try { const arr=JSON.parse(raw); if(Array.isArray(arr)&&arr.length) return arr; } catch(e){}
+  return null;
+}
+function initParticipants() {
+  const saved=loadStateFromURL();
+  const grid=document.getElementById('player-rows');
+  grid.innerHTML='';
+  if(saved){
+    saved.forEach(r=>addPlayerRow(r.n||'', r.e||null, r.c||1));
+    while(grid.children.length<2) addPlayerRow();
+  } else {
+    for(let i=0;i<5;i++) addPlayerRow();
+  }
+}
+function confirmResetParticipants(){ document.getElementById('reset-modal').classList.add('open'); }
+function closeResetModal(){ document.getElementById('reset-modal').classList.remove('open'); }
+function doResetParticipants(){
+  closeResetModal();
+  closePicker();
+  const url=new URL(window.location.href);
+  url.searchParams.delete('p');
+  history.replaceState(null,'',url);
+  const grid=document.getElementById('player-rows');
+  grid.innerHTML='';
+  for(let i=0;i<5;i++) addPlayerRow();
 }
 
 function getPlayersFromForm() {
@@ -1420,7 +1496,10 @@ function spawnConfetti(winnerEmoji='🏆') {
     document.body.appendChild(el); setTimeout(()=>el.remove(),6000);
   }
 }
-addPlayerRow(); addPlayerRow(); addPlayerRow(); addPlayerRow(); addPlayerRow();
+initParticipants();
+// Keep the address-bar URL in sync with the form on any edit (name, emoji, entries, add/remove).
+document.getElementById('setup-screen').addEventListener('input', scheduleSync);
+document.getElementById('setup-screen').addEventListener('click', scheduleSync);
 
 // ── Audio Engine (Web Audio API — no external files) ──────────────────────
 const SFX = (() => {
