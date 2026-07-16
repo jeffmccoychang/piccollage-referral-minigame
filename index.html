@@ -535,14 +535,14 @@
       <div class="ap-row">
         <span class="ap-lbl">BGM</span>
         <button class="ap-mute" id="bgm-mute" onclick="toggleBGMute()">🔊</button>
-        <input type="range" id="bgm-vol" min="0" max="100" value="100" oninput="setBGVol(this.value)">
-        <span class="ap-val" id="bgm-vol-label">100</span>
+        <input type="range" id="bgm-vol" min="0" max="100" value="40" oninput="setBGVol(this.value)">
+        <span class="ap-val" id="bgm-vol-label">40</span>
       </div>
       <div class="ap-row">
         <span class="ap-lbl">SFX</span>
         <button class="ap-mute" id="sfx-mute" onclick="toggleSFXMute()">🔊</button>
-        <input type="range" id="sfx-vol" min="0" max="100" value="100" oninput="setSFXVol(this.value)">
-        <span class="ap-val" id="sfx-vol-label">100</span>
+        <input type="range" id="sfx-vol" min="0" max="100" value="40" oninput="setSFXVol(this.value)">
+        <span class="ap-val" id="sfx-vol-label">40</span>
       </div>
       <div class="ap-row" id="yt-row">
         <div id="yt-row-inner">
@@ -1576,7 +1576,8 @@ document.getElementById('setup-screen').addEventListener('click', scheduleSync);
 const SFX = (() => {
   let ctx=null, master=null, bgBus=null, sfxBus=null;
   let bgPlaying=false, bgTimer=null;
-  let _bgVol=1, _sfxVol=1, _bgMuted=false, _sfxMuted=false;
+  let _bgVol=1, _sfxVol=0.4, _bgMuted=false, _sfxMuted=false;
+  const SFX_SCALE=0.25; // caps produced SFX level so it stays clear over voices when tab-sharing
   const BPM=172, B=60/BPM;
 
   // A section: 16-beat main theme (C major pentatonic)
@@ -1613,7 +1614,7 @@ const SFX = (() => {
       ctx=new(window.AudioContext||window.webkitAudioContext)();
       master=ctx.createGain();master.gain.value=1;master.connect(ctx.destination);
       bgBus=ctx.createGain();bgBus.gain.value=0.12;bgBus.connect(master);
-      sfxBus=ctx.createGain();sfxBus.gain.value=1;sfxBus.connect(master);
+      sfxBus=ctx.createGain();sfxBus.gain.value=_sfxMuted?0:_sfxVol*SFX_SCALE;sfxBus.connect(master);
       return true;
     }catch(e){return false;}
   }
@@ -1699,7 +1700,7 @@ const SFX = (() => {
   }
   function setSFXVol(v){
     _sfxVol=v;
-    if(sfxBus)sfxBus.gain.value=_sfxMuted?0:v;
+    if(sfxBus)sfxBus.gain.value=_sfxMuted?0:v*SFX_SCALE;
   }
   function toggleBGMute(){
     _bgMuted=!_bgMuted;
@@ -1709,7 +1710,7 @@ const SFX = (() => {
   }
   function toggleSFXMute(){
     _sfxMuted=!_sfxMuted;
-    if(sfxBus)sfxBus.gain.value=_sfxMuted?0:_sfxVol;
+    if(sfxBus)sfxBus.gain.value=_sfxMuted?0:_sfxVol*SFX_SCALE;
     return _sfxMuted;
   }
 
@@ -1770,6 +1771,12 @@ document.addEventListener('focusin',e=>{
 // ── YouTube BGM ────────────────────────────────────────────────────────────
 const DEFAULT_YT_ID = 'FTRnTAyiFjg';
 
+// The BGM slider (0–100) maps onto a capped actual YouTube volume so the whole
+// slider stays usable and the default sits in the sweet spot for tab-sharing.
+// slider 40 → YT 10 (tested-good over Meet); slider 100 → YT 25 (ceiling).
+const BGM_MAX_YT = 25;
+function _ytVol(sliderVal) { return Math.round(sliderVal / 100 * BGM_MAX_YT); }
+
 let _ytPlayer = null;
 let _ytReady = false;
 let _ytMode = false;       // true = youtube is active bgm
@@ -1807,7 +1814,7 @@ function _ytLoadAPI(cb) {
 }
 
 function _ytStartVideo(id, isDefault) {
-  const vol = parseInt(document.getElementById('bgm-vol').value);
+  const vol = _ytVol(parseInt(document.getElementById('bgm-vol').value));
   SFX.stopChiptune();
 
   const onReady = (e) => {
@@ -1895,7 +1902,7 @@ function ytRevert() {
 const _origSetBGVol = setBGVol;
 setBGVol = function(val) {
   _origSetBGVol(val);
-  if (_ytMode && _ytPlayer && _ytReady) _ytPlayer.setVolume(parseInt(val));
+  if (_ytMode && _ytPlayer && _ytReady) _ytPlayer.setVolume(_ytVol(parseInt(val)));
 };
 
 // Extend toggleBGMute to also mute/unmute YT when active
@@ -1905,13 +1912,24 @@ toggleBGMute = function() {
     const btn = document.getElementById('bgm-mute');
     const vol = document.getElementById('bgm-vol');
     const aboutToMute = btn.textContent === '🔊';
-    if (aboutToMute) { _ytPlayer.mute(); } else { _ytPlayer.unMute(); _ytPlayer.setVolume(parseInt(vol.value)); }
+    if (aboutToMute) { _ytPlayer.mute(); } else { _ytPlayer.unMute(); _ytPlayer.setVolume(_ytVol(parseInt(vol.value))); _ytPlayer.playVideo(); }
     btn.textContent = aboutToMute ? '🔇' : '🔊';
     vol.disabled = aboutToMute;
   } else {
     _origToggleBGMute();
   }
 };
+
+// Resume BGM when returning to the tab — the browser may pause the (muted or
+// backgrounded) YouTube video while the tab is hidden, and unMute alone won't
+// restart it. Only resume when BGM isn't intentionally muted.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') return;
+  if (!(_ytMode && _ytPlayer && _ytReady)) return;
+  const btn = document.getElementById('bgm-mute');
+  if (btn && btn.textContent === '🔇') return; // user muted on purpose
+  _ytPlayer.playVideo();
+});
 
 // ── Color Theme Engine ────────────────────────────────────
 (function(){
